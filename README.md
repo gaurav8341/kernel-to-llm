@@ -11,6 +11,7 @@ CUDA × LLM Mastery — a project-first, week-by-week roadmap for learning GPU k
 ## Files
 
 - [`Objective.md`](Objective.md) — the roadmap source (Markdown)
+- [`ARCHITECTURE.md`](ARCHITECTURE.md) — how the code will be structured as projects get built
 - [`cuda-llm-master-roadmap.html`](cuda-llm-master-roadmap.html) — styled, readable version of the same roadmap
 - [`cuda-llm-master-roadmap.pdf`](cuda-llm-master-roadmap.pdf) / [`CUDA × LLM — Master Roadmap.pdf`](<CUDA × LLM — Master Roadmap.pdf>) — printable exports
 
