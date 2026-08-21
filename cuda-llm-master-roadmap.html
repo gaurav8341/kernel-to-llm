@@ -1,0 +1,1462 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CUDA × LLM — Master Roadmap</title>
+<link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Bebas+Neue&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #09090b;
+    --surface: #0f1013;
+    --card: #15171b;
+    --border: #1e2128;
+    --border-hi: #2a2f3a;
+    --accent: #f97316;
+    --blue: #3b82f6;
+    --green: #22c55e;
+    --purple: #a855f7;
+    --yellow: #eab308;
+    --dim: #6b7280;
+    --text: #c9cdd6;
+    --heading: #f1f3f7;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'DM Sans', sans-serif;
+    font-weight: 300;
+    line-height: 1.6;
+    overflow-x: hidden;
+  }
+
+  body::before {
+    content: '';
+    position: fixed; inset: 0;
+    background-image: radial-gradient(circle, #ffffff06 1px, transparent 1px);
+    background-size: 32px 32px;
+    pointer-events: none; z-index: 0;
+  }
+
+  .wrap { max-width: 920px; margin: 0 auto; padding: 0 24px; position: relative; z-index: 1; }
+
+  /* ── HEADER ── */
+  header { padding: 72px 0 52px; border-bottom: 1px solid var(--border); }
+
+  .eyebrow {
+    font-family: 'Space Mono', monospace;
+    font-size: 10px; letter-spacing: 3px;
+    color: var(--accent); text-transform: uppercase;
+    margin-bottom: 20px;
+    display: flex; align-items: center; gap: 10px;
+  }
+  .eyebrow::after { content: ''; width: 80px; height: 1px; background: var(--border); }
+
+  h1 {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: clamp(48px, 9vw, 88px);
+    line-height: 0.9; color: var(--heading); letter-spacing: 1px;
+  }
+  h1 em { font-style: normal; color: var(--accent); }
+
+  .tagline {
+    margin-top: 18px;
+    font-family: 'Space Mono', monospace;
+    font-size: 11px; color: var(--dim);
+    max-width: 520px; line-height: 1.8;
+  }
+
+  .hw-badge {
+    margin-top: 24px;
+    display: inline-flex; align-items: center; gap: 8px;
+    background: rgba(249,115,22,0.08);
+    border: 1px solid rgba(249,115,22,0.25);
+    border-radius: 6px; padding: 8px 14px;
+    font-family: 'Space Mono', monospace; font-size: 10px; color: var(--accent);
+  }
+  .hw-badge span { color: var(--dim); }
+
+  .stat-row { display: flex; gap: 0; margin-top: 28px; border: 1px solid var(--border); border-radius: 6px; overflow: hidden; width: fit-content; }
+  .stat { padding: 12px 22px; border-right: 1px solid var(--border); }
+  .stat:last-child { border-right: none; }
+  .stat-n { font-family: 'Bebas Neue', sans-serif; font-size: 28px; color: var(--heading); line-height: 1; }
+  .stat-l { font-family: 'Space Mono', monospace; font-size: 9px; color: var(--dim); letter-spacing: 2px; text-transform: uppercase; margin-top: 2px; }
+
+  /* ── PHILOSOPHY ── */
+  .philosophy {
+    margin: 40px 0 0;
+    border-left: 2px solid var(--accent);
+    padding: 16px 20px;
+    background: rgba(249,115,22,0.04);
+    border-radius: 0 6px 6px 0;
+    font-family: 'Space Mono', monospace; font-size: 11px;
+    color: #a06030; line-height: 1.8;
+  }
+  .philosophy strong { color: var(--accent); }
+
+  /* ── PHASE BLOCK ── */
+  .phase-block {
+    margin-top: 56px;
+  }
+
+  .phase-header {
+    display: flex; align-items: center; gap: 16px;
+    margin-bottom: 20px; padding-bottom: 14px;
+    border-bottom: 1px solid var(--border);
+  }
+  .phase-num {
+    font-family: 'Bebas Neue', sans-serif; font-size: 48px;
+    line-height: 1; color: var(--border-hi); min-width: 44px;
+    transition: color 0.2s;
+  }
+  .phase-block:hover .phase-num { color: var(--accent); }
+  .phase-title-col { flex: 1; }
+  .phase-name {
+    font-family: 'Bebas Neue', sans-serif; font-size: 24px;
+    color: var(--heading); letter-spacing: 0.5px;
+  }
+  .phase-subtitle {
+    font-family: 'Space Mono', monospace; font-size: 10px;
+    color: var(--dim); margin-top: 2px;
+  }
+  .diff-pill {
+    font-family: 'Space Mono', monospace; font-size: 9px;
+    padding: 3px 10px; border-radius: 20px; border: 1px solid; white-space: nowrap;
+  }
+  .d-starter { color: var(--green); border-color: rgba(34,197,94,0.3); background: rgba(34,197,94,0.06); }
+  .d-mid     { color: var(--blue);  border-color: rgba(59,130,246,0.3); background: rgba(59,130,246,0.06); }
+  .d-hard    { color: var(--accent);border-color: rgba(249,115,22,0.3); background: rgba(249,115,22,0.06); }
+  .d-expert  { color: var(--purple);border-color: rgba(168,85,247,0.3); background: rgba(168,85,247,0.06); }
+
+  /* ── PROJECT CARD ── */
+  .project-card {
+    background: var(--card);
+    border: 1px solid var(--border-hi);
+    border-radius: 8px; overflow: hidden;
+    transition: border-color 0.2s, box-shadow 0.2s;
+  }
+  .project-card:hover {
+    border-color: rgba(249,115,22,0.5);
+    box-shadow: 0 4px 24px rgba(249,115,22,0.06);
+  }
+
+  /* card top bar */
+  .card-top {
+    padding: 18px 22px 14px;
+    border-bottom: 1px solid var(--border);
+    display: flex; align-items: flex-start; gap: 14px;
+  }
+  .card-icon {
+    width: 38px; height: 38px; border-radius: 8px; flex-shrink: 0;
+    background: rgba(249,115,22,0.1); border: 1px solid rgba(249,115,22,0.2);
+    display: flex; align-items: center; justify-content: center; font-size: 16px;
+  }
+  .card-title-col { flex: 1; }
+  .card-label {
+    font-family: 'Space Mono', monospace; font-size: 9px;
+    color: var(--accent); letter-spacing: 2px; text-transform: uppercase; margin-bottom: 3px;
+  }
+  .card-title {
+    font-family: 'Space Mono', monospace; font-size: 14px;
+    font-weight: 700; color: var(--heading); line-height: 1.3;
+  }
+  .card-desc {
+    font-size: 12px; color: var(--text); line-height: 1.6; margin-top: 5px;
+  }
+
+  /* card body */
+  .card-body { padding: 0; }
+
+  /* weeks accordion */
+  .weeks { border-bottom: 1px solid var(--border); }
+
+  .week {
+    border-bottom: 1px solid var(--border);
+  }
+  .week:last-child { border-bottom: none; }
+
+  .week-header {
+    display: flex; align-items: center; gap: 12px;
+    padding: 11px 22px; cursor: pointer;
+    user-select: none;
+    transition: background 0.15s;
+  }
+  .week-header:hover { background: rgba(255,255,255,0.02); }
+
+  .week-num {
+    font-family: 'Space Mono', monospace; font-size: 9px;
+    color: var(--accent); letter-spacing: 1px; text-transform: uppercase;
+    min-width: 56px;
+  }
+  .week-title {
+    font-family: 'Space Mono', monospace; font-size: 11px;
+    color: var(--heading); flex: 1;
+  }
+  .week-toggle {
+    font-size: 10px; color: var(--dim); transition: transform 0.2s;
+    font-family: 'Space Mono', monospace;
+  }
+  .week.open .week-toggle { transform: rotate(180deg); }
+
+  .week-body {
+    display: none; padding: 0 22px 14px 22px;
+    border-top: 1px solid var(--border);
+    background: rgba(0,0,0,0.2);
+  }
+  .week.open .week-body { display: block; }
+
+  /* depth weeks — always visible, never need .open */
+  .depth-week { border-top: 2px dashed rgba(168,85,247,0.4); margin-top: 2px; }
+  .depth-week .week-header { background: rgba(168,85,247,0.07); cursor: default; }
+  .depth-week .week-header:hover { background: rgba(168,85,247,0.1); }
+  .depth-week .week-num { color: var(--purple) !important; }
+  .depth-week .week-title { color: #c084fc !important; }
+  .depth-week .week-toggle { display: none; }
+  .depth-week .week-body {
+    display: block !important;
+    background: rgba(168,85,247,0.03);
+    border-top: 1px dashed rgba(168,85,247,0.2);
+    padding: 0 22px 14px 22px;
+  }
+  .depth-week .deliverable-list li::before { color: var(--purple) !important; }
+
+  .deliverable-list {
+    list-style: none; display: flex; flex-direction: column; gap: 5px;
+    padding-top: 12px;
+  }
+  .deliverable-list li {
+    display: flex; align-items: flex-start; gap: 8px;
+    font-size: 12px; color: var(--text);
+  }
+  .deliverable-list li::before {
+    content: '→'; color: var(--accent);
+    font-family: 'Space Mono', monospace; font-size: 10px;
+    flex-shrink: 0; margin-top: 2px;
+  }
+
+  /* unlocks + resources row */
+  .card-footer {
+    padding: 14px 22px;
+    display: flex; flex-direction: column; gap: 10px;
+  }
+
+  .section-label {
+    font-family: 'Space Mono', monospace; font-size: 9px;
+    color: var(--dim); letter-spacing: 2px; text-transform: uppercase;
+    margin-bottom: 6px;
+  }
+
+  .pills { display: flex; flex-wrap: wrap; gap: 5px; }
+  .pill {
+    font-family: 'Space Mono', monospace; font-size: 9px;
+    color: var(--dim); background: var(--surface);
+    border: 1px solid var(--border); border-radius: 20px; padding: 2px 9px;
+  }
+
+  .resources { display: flex; flex-wrap: wrap; gap: 5px; padding-top: 10px; border-top: 1px solid var(--border); }
+  .res-link {
+    font-family: 'Space Mono', monospace; font-size: 9px;
+    color: var(--blue);
+    background: rgba(59,130,246,0.06);
+    border: 1px solid rgba(59,130,246,0.2);
+    border-radius: 4px; padding: 3px 8px;
+    text-decoration: none;
+    transition: background 0.15s, border-color 0.15s, color 0.15s;
+  }
+  .res-link::before { content: '◈ '; }
+  .res-link::after { content: ' ↗'; font-size: 8px; opacity: 0.5; }
+  .res-link:hover { background: rgba(59,130,246,0.14); border-color: rgba(59,130,246,0.45); color: #93c5fd; }
+
+  .depth-tag {
+    font-family: 'Space Mono', monospace; font-size: 8px;
+    color: var(--purple); background: rgba(168,85,247,0.1);
+    border: 1px solid rgba(168,85,247,0.25);
+    border-radius: 3px; padding: 1px 6px;
+    margin-left: 6px; vertical-align: middle; letter-spacing: 1px;
+  }
+
+  .code-block {
+    margin-top: 10px;
+    background: #080a0e; border: 1px solid var(--border-hi);
+    border-left: 2px solid var(--purple);
+    border-radius: 4px; padding: 10px 14px;
+    font-family: 'Space Mono', monospace; font-size: 10px;
+    color: #7a8a9f; line-height: 1.8; overflow-x: auto; white-space: pre;
+  }
+  .cm { color: #3d4a5c; }
+  .kw { color: #f97316; }
+  .gd { color: #22c55e; }
+  .bd { color: #ef4444; }
+  .cmd { color: #a78bfa; }
+
+  /* going lower section */
+  .lower-section { margin-top: 60px; padding-top: 40px; border-top: 1px solid rgba(168,85,247,0.2); }
+  .lower-title { font-family: 'Bebas Neue', sans-serif; font-size: 28px; color: var(--purple); margin-bottom: 6px; letter-spacing: 0.5px; }
+  .lower-subtitle { font-family: 'Space Mono', monospace; font-size: 10px; color: var(--dim); margin-bottom: 28px; line-height: 1.8; }
+  .lower-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 12px; }
+  .lower-card { background: var(--card); border: 1px solid rgba(168,85,247,0.2); border-radius: 8px; padding: 18px; transition: border-color 0.2s; }
+  .lower-card:hover { border-color: rgba(168,85,247,0.5); }
+  .lower-card-label { font-family: 'Space Mono', monospace; font-size: 9px; color: var(--purple); letter-spacing: 2px; text-transform: uppercase; margin-bottom: 6px; }
+  .lower-card-title { font-family: 'Space Mono', monospace; font-size: 12px; font-weight: 700; color: var(--heading); margin-bottom: 8px; line-height: 1.3; }
+  .lower-card-desc { font-size: 11px; color: var(--dim); line-height: 1.6; margin-bottom: 12px; }
+  .lower-resources { display: flex; flex-wrap: wrap; gap: 5px; }
+  .res-link-p {
+    font-family: 'Space Mono', monospace; font-size: 9px; color: #c084fc;
+    background: rgba(168,85,247,0.06); border: 1px solid rgba(168,85,247,0.2);
+    border-radius: 4px; padding: 3px 8px; text-decoration: none;
+    transition: background 0.15s, border-color 0.15s;
+  }
+  .res-link-p::before { content: '◈ '; }
+  .res-link-p::after { content: ' ↗'; font-size: 8px; opacity: 0.5; }
+  .res-link-p:hover { background: rgba(168,85,247,0.14); border-color: rgba(168,85,247,0.45); }
+
+  /* ── TIMELINE OVERVIEW ── */
+  .timeline-section { margin-top: 60px; padding-top: 40px; border-top: 1px solid var(--border); }
+  .timeline-title {
+    font-family: 'Bebas Neue', sans-serif; font-size: 28px;
+    color: var(--heading); margin-bottom: 24px; letter-spacing: 0.5px;
+  }
+  .timeline-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+    gap: 8px;
+  }
+  .tl-cell {
+    background: var(--card); border: 1px solid var(--border);
+    border-radius: 6px; padding: 10px 12px;
+    transition: border-color 0.2s;
+  }
+  .tl-cell:hover { border-color: var(--accent); }
+  .tl-week {
+    font-family: 'Space Mono', monospace; font-size: 8px;
+    color: var(--accent); letter-spacing: 1px; text-transform: uppercase; margin-bottom: 4px;
+  }
+  .tl-proj {
+    font-family: 'Space Mono', monospace; font-size: 10px;
+    color: var(--heading); line-height: 1.3;
+  }
+  .tl-tag {
+    font-size: 10px; margin-top: 4px;
+  }
+
+  /* ── FOOTER ── */
+  footer {
+    border-top: 1px solid var(--border);
+    padding: 32px 0 48px;
+    display: flex; justify-content: space-between; align-items: center;
+    flex-wrap: wrap; gap: 10px; margin-top: 60px;
+  }
+  footer span {
+    font-family: 'Space Mono', monospace; font-size: 10px; color: var(--dim);
+  }
+  footer strong { color: var(--accent); }
+
+  /* anims */
+  .phase-block {
+    opacity: 0; transform: translateY(16px);
+    animation: fadeup 0.4s ease forwards;
+  }
+  .phase-block:nth-child(1){animation-delay:.04s}
+  .phase-block:nth-child(2){animation-delay:.08s}
+  .phase-block:nth-child(3){animation-delay:.12s}
+  .phase-block:nth-child(4){animation-delay:.16s}
+  .phase-block:nth-child(5){animation-delay:.20s}
+  .phase-block:nth-child(6){animation-delay:.24s}
+  .phase-block:nth-child(7){animation-delay:.28s}
+  .phase-block:nth-child(8){animation-delay:.32s}
+  .phase-block:nth-child(9){animation-delay:.36s}
+  .phase-block:nth-child(10){animation-delay:.40s}
+  .phase-block:nth-child(11){animation-delay:.44s}
+  .phase-block:nth-child(12){animation-delay:.48s}
+  @keyframes fadeup { to { opacity:1; transform:translateY(0); } }
+
+  ::-webkit-scrollbar { width: 3px; }
+  ::-webkit-scrollbar-thumb { background: var(--border-hi); border-radius: 2px; }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<!-- ══════════════ HEADER ══════════════ -->
+<header>
+  <div class="eyebrow">Integrated Master Roadmap · RTX 3050 4GB</div>
+  <h1>CUDA <em>×</em><br>LLM<br>MASTERY</h1>
+  <p class="tagline">// Project-first. Week-by-week. Every deliverable is concrete.<br>Merged from 3 roadmaps — nothing redundant, nothing missing.</p>
+
+  <div class="hw-badge">
+    🖥 RTX 3050 4GB · GA106 Ampere · 80 Tensor Cores · 128-bit bus
+    <span>| 8GB System RAM</span>
+  </div>
+
+  <div class="stat-row">
+    <div class="stat"><div class="stat-n">12</div><div class="stat-l">Projects</div></div>
+    <div class="stat"><div class="stat-n">~30</div><div class="stat-l">Weeks</div></div>
+    <div class="stat"><div class="stat-n">3</div><div class="stat-l">Sources merged</div></div>
+    <div class="stat"><div class="stat-n">↑↑</div><div class="stat-l">Difficulty</div></div>
+  </div>
+
+  <div class="philosophy">
+    <strong>The rule:</strong> Each project comes first. Weeks tell you exactly what to ship.<br>
+    "You'll need to figure out" = concepts you'll hit a wall on. Look them up then, not before.<br>
+    Resources are lookup references — not a reading list to complete before starting.
+  </div>
+</header>
+
+<!-- ══════════════ PROJECTS ══════════════ -->
+
+<!-- P00 -->
+<div class="phase-block">
+  <div class="phase-header">
+    <div class="phase-num">00</div>
+    <div class="phase-title-col">
+      <div class="phase-name">Speed of Light Benchmark</div>
+      <div class="phase-subtitle">Week 1 · Know your ceiling before writing a single kernel</div>
+    </div>
+    <div class="diff-pill d-starter">Starter</div>
+  </div>
+  <div class="project-card">
+    <div class="card-top">
+      <div class="card-icon">📐</div>
+      <div class="card-title-col">
+        <div class="card-label">Project 00</div>
+        <div class="card-title">Benchmark Your RTX 3050 — Peak TFLOPS & Memory Bandwidth</div>
+        <div class="card-desc">Before writing any kernel, measure your hardware's physical ceiling. You'll reference these numbers in every future project to know if you're hitting the roof.</div>
+      </div>
+    </div>
+    <div class="card-body">
+      <div class="weeks">
+        <div class="week open">
+          <div class="week-header" onclick="toggleWeek(this)">
+            <span class="week-num">Week 1</span>
+            <span class="week-title">Setup + measure hardware limits</span>
+            <span class="week-toggle">▼</span>
+          </div>
+          <div class="week-body">
+            <ul class="deliverable-list">
+              <li>Install CUDA toolkit, NVCC, Nsight Systems + Compute on WSL2/Ubuntu</li>
+              <li>Write a bandwidth test: time cudaMemcpy of 1GB host→device, compute GB/s</li>
+              <li>Write a compute test: max-throughput fp32 kernel, compute TFLOPS achieved</li>
+              <li>Record your 3050's actual numbers: theoretical vs achieved bandwidth and TFLOPS</li>
+              <li>Write a one-page "Hardware Spec Sheet" — you'll reference this all roadmap</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+      <div class="card-footer">
+        <div>
+          <div class="section-label">You'll need to figure out</div>
+          <div class="pills">
+            <span class="pill">NVCC compilation flags</span>
+            <span class="pill">cudaEvent_t timing</span>
+            <span class="pill">theoretical peak = SMs × clock × ops/cycle</span>
+            <span class="pill">PCIe bandwidth vs VRAM bandwidth</span>
+            <span class="pill">TGP throttling on laptop GPUs</span>
+          </div>
+        </div>
+        <div class="resources">
+          <a class="res-link" href="https://docs.nvidia.com/cuda/cuda-installation-guide-linux/" target="_blank">CUDA Install Guide (Linux/WSL2)</a>
+          <a class="res-link" href="https://developer.nvidia.com/nsight-systems" target="_blank">Nsight Systems</a>
+          <a class="res-link" href="https://developer.nvidia.com/nsight-compute" target="_blank">Nsight Compute</a>
+          <a class="res-link" href="https://www.techpowerup.com/gpu-specs/geforce-rtx-3050-mobile.c3788" target="_blank">RTX 3050 Mobile Specs (TechPowerUp)</a>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- P01 -->
+<div class="phase-block">
+  <div class="phase-header">
+    <div class="phase-num">01</div>
+    <div class="phase-title-col">
+      <div class="phase-name">The Memory Architect — SGEMM</div>
+      <div class="phase-subtitle">Weeks 2–3 · Global mem → shared mem → beat cuBLAS</div>
+    </div>
+    <div class="diff-pill d-starter">Starter</div>
+  </div>
+  <div class="project-card">
+    <div class="card-top">
+      <div class="card-icon">⚡</div>
+      <div class="card-title-col">
+        <div class="card-label">Project 01</div>
+        <div class="card-title">Tiled SGEMM — Reach 60–70% of Your 3050's Peak TFLOPS</div>
+        <div class="card-desc">Write a raw CUDA matrix multiply without cuBLAS. Naive version first — it will be 10× slower than it should be. Profile, understand why, fix it.</div>
+      </div>
+    </div>
+    <div class="card-body">
+      <div class="weeks">
+        <div class="week open">
+          <div class="week-header" onclick="toggleWeek(this)">
+            <span class="week-num">Week 2</span>
+            <span class="week-title">Naive kernel + profiling baseline</span>
+            <span class="week-toggle">▼</span>
+          </div>
+          <div class="week-body">
+            <ul class="deliverable-list">
+              <li>Write naive GEMM: one thread = one output element, global memory only</li>
+              <li>Test correctness vs numpy matmul (fp32, tolerance 1e-4)</li>
+              <li>Profile with ncu — identify it as "memory bound", record L2 cache hit rate</li>
+              <li>Compute arithmetic intensity of your naive kernel (FLOPS / bytes moved)</li>
+            </ul>
+          </div>
+        </div>
+        <div class="week">
+          <div class="week-header" onclick="toggleWeek(this)">
+            <span class="week-num">Week 3</span>
+            <span class="week-title">Tiled kernel + benchmark table</span>
+            <span class="week-toggle">▼</span>
+          </div>
+          <div class="week-body">
+            <ul class="deliverable-list">
+              <li>Implement tiled GEMM: load tiles into __shared__ memory, compute locally</li>
+              <li>Fix bank conflicts: pad shared memory arrays, verify with ncu bank conflict counter</li>
+              <li>Benchmark table: naive vs tiled vs cuBLAS at sizes 512², 1024², 4096²</li>
+              <li>README: annotated diagram of the tiling strategy + your TFLOPS numbers</li>
+            </ul>
+          </div>
+        </div>
+        <div class="week depth-week">
+          <div class="week-header" onclick="toggleWeek(this)">
+            <span class="week-num">Week 3+</span>
+            <span class="week-title">Read the PTX your kernel generates <span class="depth-tag">↓ LOWER LEVEL</span></span>
+            <span class="week-toggle">▼</span>
+          </div>
+          <div class="week-body">
+            <ul class="deliverable-list">
+              <li>Dump PTX for both naive and tiled kernels: <code>nvcc --ptx mykernel.cu -o mykernel.ptx</code></li>
+              <li>Find <code>ld.global</code> vs <code>ld.shared</code> — confirm shared memory loads appear in inner loop</li>
+              <li>Look for <code>st.local</code> / <code>ld.local</code> — if present, you have a register spill, fix it</li>
+              <li>Check <code>bar.sync</code> count — matches your __syncthreads() calls</li>
+              <li>Add <code>const __restrict__</code> to kernel args, redump PTX — spot <code>ld.global.nc</code> appearing (L1 texture cache for read-only)</li>
+              <li>Use Godbolt with CUDA NVCC + flag <code>--ptx</code> to browse PTX interactively</li>
+            </ul>
+            <div class="code-block"><span class="cm">// what you want to see in your tiled kernel's inner loop:</span>
+<span class="gd">ld.shared.f32   %f1, [%r4];       </span><span class="cm">// load from shared — good</span>
+<span class="gd">ld.shared.f32   %f2, [%r5];       </span><span class="cm">// load from shared — good</span>
+<span class="gd">fma.rn.f32      %f3, %f1, %f2, %f3; </span><span class="cm">// fused multiply-add — good</span>
+
+<span class="cm">// what you do NOT want to see:</span>
+<span class="bd">ld.global.f32   %f4, [%rd1];      </span><span class="cm">// global load in inner loop — not tiled properly</span>
+<span class="bd">st.local.f32    [%rd2+0], %f5;    </span><span class="cm">// register spill — too many variables</span></div>
+          </div>
+        </div>
+      </div>
+      <div class="card-footer">
+        <div>
+          <div class="section-label">You'll need to figure out</div>
+          <div class="pills">
+            <span class="pill">thread/block/grid hierarchy</span>
+            <span class="pill">__shared__ memory lifetime</span>
+            <span class="pill">__syncthreads()</span>
+            <span class="pill">memory coalescing</span>
+            <span class="pill">shared memory bank conflicts</span>
+            <span class="pill">occupancy vs register count</span>
+            <span class="pill">roofline model</span>
+            <span class="pill">PTX ld.global vs ld.shared</span>
+            <span class="pill">register spill → st.local</span>
+          </div>
+        </div>
+        <div class="resources">
+          <a class="res-link" href="https://docs.nvidia.com/cuda/cuda-c-programming-guide/index.html#shared-memory" target="_blank">CUDA Guide — Shared Memory</a>
+          <a class="res-link" href="https://siboehm.com/articles/22/CUDA-MMM" target="_blank">Simon Boehm — How to Optimize CUDA Matmul</a>
+          <a class="res-link" href="https://developer.nvidia.com/blog/using-shared-memory-cuda-cc/" target="_blank">NVIDIA Blog — Using Shared Memory</a>
+          <a class="res-link" href="https://developer.nvidia.com/cuda-example" target="_blank">CUDA by Example — Ch3–5</a>
+          <a class="res-link" href="https://docs.nvidia.com/cuda/parallel-thread-execution/index.html" target="_blank">PTX ISA Reference (use as dictionary)</a>
+          <a class="res-link" href="https://godbolt.org/" target="_blank">Godbolt — Compiler Explorer (CUDA NVCC + --ptx)</a>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- P02 -->
+<div class="phase-block">
+  <div class="phase-header">
+    <div class="phase-num">02</div>
+    <div class="phase-title-col">
+      <div class="phase-name">The Warp Tactician — Parallel Reduction</div>
+      <div class="phase-subtitle">Week 4 · Master warp-level primitives</div>
+    </div>
+    <div class="diff-pill d-starter">Starter → Mid</div>
+  </div>
+  <div class="project-card">
+    <div class="card-top">
+      <div class="card-icon">🔀</div>
+      <div class="card-title-col">
+        <div class="card-label">Project 02</div>
+        <div class="card-title">Sum 100M Elements — No Shared Memory Allowed in Final Version</div>
+        <div class="card-desc">Sum a 100-million element float array. Start with shared memory reduction, then eliminate it entirely using warp shuffle intrinsics. This unlocks softmax, layernorm, and attention.</div>
+      </div>
+    </div>
+    <div class="card-body">
+      <div class="weeks">
+        <div class="week open">
+          <div class="week-header" onclick="toggleWeek(this)">
+            <span class="week-num">Week 4</span>
+            <span class="week-title">Tree reduction → warp shuffle version</span>
+            <span class="week-toggle">▼</span>
+          </div>
+          <div class="week-body">
+            <ul class="deliverable-list">
+              <li>Naive reduction: divergent if/else, profile warp divergence in ncu</li>
+              <li>Tree reduction: eliminate divergence, benchmark speedup</li>
+              <li>Warp shuffle version: replace __shared__ with __shfl_down_sync entirely</li>
+              <li>Add atomic final reduction across blocks</li>
+              <li>Benchmark all 3 versions — chart showing GB/s for each</li>
+              <li>Bonus: implement parallel max (needed for softmax)</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+      <div class="card-footer">
+        <div>
+          <div class="section-label">You'll need to figure out</div>
+          <div class="pills">
+            <span class="pill">warp divergence cost</span>
+            <span class="pill">__shfl_down_sync mask</span>
+            <span class="pill">warp = 32 threads always execute together</span>
+            <span class="pill">atomicAdd limitations</span>
+            <span class="pill">loop unrolling #pragma unroll</span>
+            <span class="pill">block-level vs warp-level reduction</span>
+          </div>
+        </div>
+        <div class="resources">
+          <a class="res-link" href="https://developer.download.nvidia.com/assets/cuda/files/reduction.pdf" target="_blank">Mark Harris — Optimizing Parallel Reduction (NVIDIA)</a>
+          <a class="res-link" href="https://docs.nvidia.com/cuda/cuda-c-programming-guide/index.html#warp-shuffle-functions" target="_blank">CUDA Guide — Warp Shuffle Functions</a>
+          <a class="res-link" href="https://developer.nvidia.com/blog/using-cuda-warp-level-primitives/" target="_blank">NVIDIA Blog — Warp-Level Primitives</a>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- P03 -->
+<div class="phase-block">
+  <div class="phase-header">
+    <div class="phase-num">03</div>
+    <div class="phase-title-col">
+      <div class="phase-name">Warp Divergence in the Wild — Image Convolution</div>
+      <div class="phase-subtitle">Week 5 · Constant memory, texture memory, boundary handling</div>
+    </div>
+    <div class="diff-pill d-starter">Starter → Mid</div>
+  </div>
+  <div class="project-card">
+    <div class="card-top">
+      <div class="card-icon">🖼</div>
+      <div class="card-title-col">
+        <div class="card-label">Project 03</div>
+        <div class="card-title">Gaussian Blur + Sobel Filter — Visual Output You Can See</div>
+        <div class="card-desc">Implement 2D convolution on a real image. The boundary pixel "halo" problem forces you to handle warp divergence in a concrete, debuggable way. Teaches constant memory — a cache type LLMs also use for weight broadcasts.</div>
+      </div>
+    </div>
+    <div class="card-body">
+      <div class="weeks">
+        <div class="week open">
+          <div class="week-header" onclick="toggleWeek(this)">
+            <span class="week-num">Week 5</span>
+            <span class="week-title">Convolution kernel + constant memory</span>
+            <span class="week-toggle">▼</span>
+          </div>
+          <div class="week-body">
+            <ul class="deliverable-list">
+              <li>Naive 2D convolution kernel on a 4K image (Gaussian 5×5 kernel)</li>
+              <li>Move filter weights to __constant__ memory — measure speedup</li>
+              <li>Implement Sobel edge detection as second kernel</li>
+              <li>Handle halo/border pixels without warp divergence (predication instead of if/else)</li>
+              <li>Save output images — visual proof your kernels work</li>
+              <li>Profile: compare warp efficiency before/after divergence fix in ncu</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+      <div class="card-footer">
+        <div>
+          <div class="section-label">You'll need to figure out</div>
+          <div class="pills">
+            <span class="pill">__constant__ memory 64KB limit</span>
+            <span class="pill">broadcast vs cache difference</span>
+            <span class="pill">predication over branching</span>
+            <span class="pill">2D block/grid indexing</span>
+            <span class="pill">texture memory (optional)</span>
+            <span class="pill">stb_image for loading images in C</span>
+          </div>
+        </div>
+        <div class="resources">
+          <a class="res-link" href="https://docs.nvidia.com/cuda/cuda-c-programming-guide/index.html#constant-memory" target="_blank">CUDA Guide — Constant Memory</a>
+          <a class="res-link" href="https://developer.nvidia.com/blog/cuda-pro-tip-write-flexible-kernels-grid-stride-loops/" target="_blank">NVIDIA — Grid-Stride Loops</a>
+          <a class="res-link" href="https://github.com/nothings/stb/blob/master/stb_image.h" target="_blank">stb_image.h (single-header image loader)</a>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- P04 -->
+<div class="phase-block">
+  <div class="phase-header">
+    <div class="phase-num">04</div>
+    <div class="phase-title-col">
+      <div class="phase-name">The Tensor Core Specialist — WMMA</div>
+      <div class="phase-subtitle">Weeks 6–7 · Use your 3050's actual AI hardware</div>
+    </div>
+    <div class="diff-pill d-mid">Mid</div>
+  </div>
+  <div class="project-card">
+    <div class="card-top">
+      <div class="card-icon">🧮</div>
+      <div class="card-title-col">
+        <div class="card-label">Project 04</div>
+        <div class="card-title">FP16 GEMM with Tensor Cores — 4× Faster Than Your FP32 Kernel</div>
+        <div class="card-desc">Your RTX 3050 has 80 Tensor Cores that your P01 kernel never touched. Use nvcuda::wmma to explicitly trigger them. This is what PyTorch uses under the hood for every LLM matmul.</div>
+      </div>
+    </div>
+    <div class="card-body">
+      <div class="weeks">
+        <div class="week open">
+          <div class="week-header" onclick="toggleWeek(this)">
+            <span class="week-num">Week 6</span>
+            <span class="week-title">FP16 data layout + WMMA fragments</span>
+            <span class="week-toggle">▼</span>
+          </div>
+          <div class="week-body">
+            <ul class="deliverable-list">
+              <li>Convert FP32 matrices to FP16 (__half type), verify precision loss acceptable</li>
+              <li>Understand wmma::fragment layout — how 16×16 tiles map to warp registers</li>
+              <li>Implement basic wmma::mma_sync call — smallest working Tensor Core kernel</li>
+              <li>Correctness test vs FP32 cuBLAS (allow fp16 tolerance)</li>
+            </ul>
+          </div>
+        </div>
+        <div class="week">
+          <div class="week-header" onclick="toggleWeek(this)">
+            <span class="week-num">Week 7</span>
+            <span class="week-title">Tiled WMMA GEMM + benchmark vs P01</span>
+            <span class="week-toggle">▼</span>
+          </div>
+          <div class="week-body">
+            <ul class="deliverable-list">
+              <li>Full tiled WMMA GEMM: 16×16 Tensor Core tiles + shared memory staging</li>
+              <li>Benchmark: FP32 tiled (P01) vs FP16 WMMA — measure TFLOPS both</li>
+              <li>Profile Tensor Core utilization in ncu — it has a dedicated counter</li>
+              <li>README: explain why Tensor Cores need fp16 and what "mixed precision" means</li>
+            </ul>
+          </div>
+        </div>
+        <div class="week depth-week">
+          <div class="week-header" onclick="toggleWeek(this)">
+            <span class="week-num">Week 7+</span>
+            <span class="week-title">Read SASS — confirm Tensor Cores actually fired <span class="depth-tag">↓ LOWER LEVEL</span></span>
+            <span class="week-toggle">▼</span>
+          </div>
+          <div class="week-body">
+            <ul class="deliverable-list">
+              <li>Dump SASS (actual binary ISA) with: <code>cuobjdump --sass mykernel.cubin</code></li>
+              <li>Find <code>HMMA</code> instructions — these are your Tensor Core calls. Count them in the inner loop</li>
+              <li>Check for <code>LDG</code> (load global), <code>LDS</code> (load shared), <code>STL</code> (store local = spill)</li>
+              <li>Compare SASS of your WMMA kernel vs your P01 FP32 kernel — spot the structural difference</li>
+              <li>Rewrite one kernel using the CUDA Driver API directly (<code>cuLaunchKernel</code> instead of <<<>>>)</li>
+              <li>Enable driver tracing: run with <code>CUDA_LAUNCH_BLOCKING=1</code> + nsys, observe every driver call in timeline</li>
+            </ul>
+            <div class="code-block"><span class="cm">// dump SASS from compiled binary:</span>
+<span class="cmd">nvcc -cubin mykernel.cu -o mykernel.cubin</span>
+<span class="cmd">cuobjdump --sass mykernel.cubin | grep -A5 "Function : _Z"</span>
+
+<span class="cm">// what Tensor Core firing looks like in SASS:</span>
+<span class="gd">HMMA.16816.F32  R4, R8, R12, R4   </span><span class="cm">// Tensor Core: 16×8×16 mixed-prec matmul</span>
+<span class="gd">LDS.128         R8,  [R2+0x80]    </span><span class="cm">// 128-bit shared load — vectorized, good</span>
+
+<span class="cm">// bad signals:</span>
+<span class="bd">STL             [R1+0x10], R5     </span><span class="cm">// register spill to local mem</span>
+<span class="bd">LDG.E.SYS       R4, [R2]         </span><span class="cm">// uncached global load</span></div>
+          </div>
+        </div>
+      </div>
+      <div class="card-footer">
+        <div>
+          <div class="section-label">You'll need to figure out</div>
+          <div class="pills">
+            <span class="pill">__half vs float precision trade-offs</span>
+            <span class="pill">wmma::fragment memory layout</span>
+            <span class="pill">16×16×16 tile requirement</span>
+            <span class="pill">load_matrix_sync / store_matrix_sync</span>
+            <span class="pill">mixed precision: fp16 compute, fp32 accumulate</span>
+            <span class="pill">Tensor Core occupancy requirements</span>
+            <span class="pill">HMMA instruction in SASS</span>
+            <span class="pill">cuLaunchKernel driver API</span>
+          </div>
+        </div>
+        <div class="resources">
+          <a class="res-link" href="https://docs.nvidia.com/cuda/cuda-c-programming-guide/index.html#wmma" target="_blank">CUDA Guide — WMMA</a>
+          <a class="res-link" href="https://developer.nvidia.com/blog/programming-tensor-cores-cuda-9/" target="_blank">NVIDIA Blog — Programming Tensor Cores</a>
+          <a class="res-link" href="https://github.com/NVIDIA/cutlass" target="_blank">CUTLASS repo</a>
+          <a class="res-link" href="https://docs.nvidia.com/cuda/cuda-driver-api/group__CUDA__EXEC.html" target="_blank">CUDA Driver API — cuLaunchKernel</a>
+          <a class="res-link" href="https://docs.nvidia.com/cuda/cuda-binary-utilities/index.html" target="_blank">cuobjdump / SASS reference</a>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- P05 -->
+<div class="phase-block">
+  <div class="phase-header">
+    <div class="phase-num">05</div>
+    <div class="phase-title-col">
+      <div class="phase-name">The Kernel Fusionist — Softmax + LayerNorm</div>
+      <div class="phase-subtitle">Weeks 8–9 · Ops that run in every LLM forward pass</div>
+    </div>
+    <div class="diff-pill d-mid">Mid</div>
+  </div>
+  <div class="project-card">
+    <div class="card-top">
+      <div class="card-icon">🔧</div>
+      <div class="card-title-col">
+        <div class="card-label">Project 05</div>
+        <div class="card-title">Fused Softmax + LayerNorm — Beat PyTorch Baseline</div>
+        <div class="card-desc">Both ops appear in every transformer block. Implement them separately, then fuse into one kernel launch. Python bindings so you can call them from PyTorch. Backward pass required.</div>
+      </div>
+    </div>
+    <div class="card-body">
+      <div class="weeks">
+        <div class="week open">
+          <div class="week-header" onclick="toggleWeek(this)">
+            <span class="week-num">Week 8</span>
+            <span class="week-title">Standalone kernels + Python bindings</span>
+            <span class="week-toggle">▼</span>
+          </div>
+          <div class="week-body">
+            <ul class="deliverable-list">
+              <li>Numerically stable softmax kernel using online max + sum (Milakov algorithm)</li>
+              <li>LayerNorm kernel: mean, variance in one pass using warp reduction from P02</li>
+              <li>Both exposed as torch custom ops via torch.utils.cpp_extension</li>
+              <li>Unit tests: outputs match torch.nn.functional to 1e-5</li>
+            </ul>
+          </div>
+        </div>
+        <div class="week">
+          <div class="week-header" onclick="toggleWeek(this)">
+            <span class="week-num">Week 9</span>
+            <span class="week-title">Fusion + backward pass + benchmark</span>
+            <span class="week-toggle">▼</span>
+          </div>
+          <div class="week-body">
+            <ul class="deliverable-list">
+              <li>Fused single-kernel version: softmax → layernorm, one HBM round-trip</li>
+              <li>Backward pass for LayerNorm (derive the gradient by hand first)</li>
+              <li>Benchmark: unfused vs fused, measure GB/s reduction</li>
+              <li>Profile: show HBM bytes read/written before and after fusion in ncu</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+      <div class="card-footer">
+        <div>
+          <div class="section-label">You'll need to figure out</div>
+          <div class="pills">
+            <span class="pill">online softmax (running max trick)</span>
+            <span class="pill">kernel fusion = fewer HBM round-trips</span>
+            <span class="pill">register pressure with many variables</span>
+            <span class="pill">torch.utils.cpp_extension setup</span>
+            <span class="pill">backward pass chain rule for layernorm</span>
+            <span class="pill">numerical stability in fp16</span>
+          </div>
+        </div>
+        <div class="resources">
+          <a class="res-link" href="https://arxiv.org/abs/1805.02867" target="_blank">Online Softmax paper (Milakov 2018)</a>
+          <a class="res-link" href="https://pytorch.org/tutorials/advanced/cpp_extension.html" target="_blank">PyTorch Custom CUDA Extensions</a>
+          <a class="res-link" href="https://triton-lang.org/main/getting-started/tutorials/05-layer-norm.html" target="_blank">Triton LayerNorm tutorial (reference)</a>
+          <a class="res-link" href="https://developer.download.nvidia.com/assets/cuda/files/reduction.pdf" target="_blank">Mark Harris — Parallel Reduction (reuse from P02)</a>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- P06 -->
+<div class="phase-block">
+  <div class="phase-header">
+    <div class="phase-num">06</div>
+    <div class="phase-title-col">
+      <div class="phase-name">The Most Important Kernel — FlashAttention</div>
+      <div class="phase-subtitle">Weeks 10–11 · Raw CUDA, no shortcuts</div>
+    </div>
+    <div class="diff-pill d-hard">Hard</div>
+  </div>
+  <div class="project-card">
+    <div class="card-top">
+      <div class="card-icon">⚙️</div>
+      <div class="card-title-col">
+        <div class="card-label">Project 06</div>
+        <div class="card-title">FlashAttention Kernel — Tile Q/K/V to Fit in Your 3050's SRAM</div>
+        <div class="card-desc">Standard attention materializes an N×N matrix in VRAM — impossible for long sequences on 4GB. Tile Q/K/V blocks into shared memory, compute online softmax, never write the intermediate matrix. Profile HBM bytes — that's the whole point.</div>
+      </div>
+    </div>
+    <div class="card-body">
+      <div class="weeks">
+        <div class="week open">
+          <div class="week-header" onclick="toggleWeek(this)">
+            <span class="week-num">Week 10</span>
+            <span class="week-title">Forward pass: tiled attention + online softmax</span>
+            <span class="week-toggle">▼</span>
+          </div>
+          <div class="week-body">
+            <ul class="deliverable-list">
+              <li>Implement naive attention in CUDA first — profile its HBM usage as baseline</li>
+              <li>Implement tiled FA-style forward: Q/K/V loaded in blocks, online softmax accumulation</li>
+              <li>Causal masking inside the tiled kernel</li>
+              <li>Correctness test vs naive PyTorch attention at seq_len 128, 512, 1024</li>
+            </ul>
+          </div>
+        </div>
+        <div class="week">
+          <div class="week-header" onclick="toggleWeek(this)">
+            <span class="week-num">Week 11</span>
+            <span class="week-title">Profile HBM savings + written explanation</span>
+            <span class="week-toggle">▼</span>
+          </div>
+          <div class="week-body">
+            <ul class="deliverable-list">
+              <li>Nsight profile: HBM bytes read — naive vs tiled (should be dramatically less)</li>
+              <li>Plot: sequence length vs peak VRAM for naive vs FlashAttention</li>
+              <li>Written explanation in your own words: why does tiling save memory?</li>
+              <li>Bonus: backward pass — recompute softmax stats from saved {m, l} instead of storing activations</li>
+            </ul>
+          </div>
+        </div>
+        <div class="week depth-week">
+          <div class="week-header" onclick="toggleWeek(this)">
+            <span class="week-num">Week 11+</span>
+            <span class="week-title">Warp stall breakdown + first chip design reading <span class="depth-tag">↓ LOWER LEVEL</span></span>
+            <span class="week-toggle">▼</span>
+          </div>
+          <div class="week-body">
+            <ul class="deliverable-list">
+              <li>Run ncu with full warp stall sections — this shows exactly why warps are idle</li>
+              <li>Identify your dominant stall type: is it memory latency, sync barriers, or instruction pipeline?</li>
+              <li>For each stall type, understand what the hardware scheduler is waiting on</li>
+              <li>Read the Chips and Cheese Ampere article — understand the GA106 die your code runs on</li>
+              <li>Write a paragraph connecting your stall reason to the actual hardware unit causing it</li>
+            </ul>
+            <div class="code-block"><span class="cmd">ncu --section WarpStateStatistics \
+    --section MemoryWorkloadAnalysis \
+    --section ComputeWorkloadAnalysis \
+    ./myflashattention</span>
+
+<span class="cm">// WarpStateStatistics shows you why warps aren't issuing instructions.</span>
+<span class="cm">// The most common stall reasons and what they mean:</span>
+
+<span class="bd">Stall_Long_Scoreboard   </span><span class="cm">// waiting for global memory load — you're memory bound</span>
+<span class="bd">Stall_MIO_Throttle      </span><span class="cm">// memory instruction queue full — too many mem ops in flight</span>
+<span class="bd">Stall_Barrier           </span><span class="cm">// hitting __syncthreads() — reduce sync points</span>
+<span class="gd">Stall_No_Instruction    </span><span class="cm">// pipeline empty, all warps busy computing — you're compute bound (rare, good)</span>
+<span class="gd">Stall_Short_Scoreboard  </span><span class="cm">// waiting for shared mem / math unit — short latency, ok</span></div>
+          </div>
+        </div>
+      </div>
+      <div class="card-footer">
+        <div>
+          <div class="section-label">You'll need to figure out</div>
+          <div class="pills">
+            <span class="pill">HBM vs SRAM bandwidth gap (~10×)</span>
+            <span class="pill">online softmax with running {m, l}</span>
+            <span class="pill">tile size constraints (SRAM limit)</span>
+            <span class="pill">register spilling to local memory</span>
+            <span class="pill">causal mask in tiled loop</span>
+            <span class="pill">recompute vs store trade-off</span>
+            <span class="pill">Stall_Long_Scoreboard = memory latency</span>
+            <span class="pill">Stall_Barrier = too many syncthreads</span>
+          </div>
+        </div>
+        <div class="resources">
+          <a class="res-link" href="https://arxiv.org/abs/2307.08691" target="_blank">FlashAttention-2 paper (Tri Dao)</a>
+          <a class="res-link" href="https://github.com/Dao-AILab/flash-attention" target="_blank">FlashAttention repo (CUDA kernels)</a>
+          <a class="res-link" href="https://gordicaleksa.medium.com/eli5-flash-attention-5c44017022ad" target="_blank">ELI5 FlashAttention — Aleksa Gordić</a>
+          <a class="res-link" href="https://arxiv.org/abs/1805.02867" target="_blank">Online Softmax paper (Milakov 2018)</a>
+          <a class="res-link" href="https://chipsandcheese.com/2021/09/22/nvidias-ampere-architecture-in-depth/" target="_blank">Chips and Cheese — Ampere In-Depth</a>
+          <a class="res-link" href="https://docs.nvidia.com/nsight-compute/ProfilingGuide/index.html#warp-states" target="_blank">ncu Warp States Reference</a>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- P07 -->
+<div class="phase-block">
+  <div class="phase-header">
+    <div class="phase-num">07</div>
+    <div class="phase-title-col">
+      <div class="phase-name">The Quantization Engineer — INT4 Bitpacking</div>
+      <div class="phase-subtitle">Week 12 · Bitwise ops, vectorized loads, Tensor Core dequant</div>
+    </div>
+    <div class="diff-pill d-mid">Mid</div>
+  </div>
+  <div class="project-card">
+    <div class="card-top">
+      <div class="card-icon">🗜️</div>
+      <div class="card-title-col">
+        <div class="card-label">Project 07</div>
+        <div class="card-title">FP16 → INT4 Quantization Kernel — Pack & Unpack at Full Speed</div>
+        <div class="card-desc">Pack four INT4 values into a single 16-bit integer. Write the dequantization kernel that runs during inference. Use float4 vectorized 128-bit loads. This is exactly how GPTQ and AWQ work under the hood.</div>
+      </div>
+    </div>
+    <div class="card-body">
+      <div class="weeks">
+        <div class="week open">
+          <div class="week-header" onclick="toggleWeek(this)">
+            <span class="week-num">Week 12</span>
+            <span class="week-title">Quantize kernel + dequant on-the-fly + benchmark</span>
+            <span class="week-toggle">▼</span>
+          </div>
+          <div class="week-body">
+            <ul class="deliverable-list">
+              <li>Quantization kernel: fp16 → INT4 with per-channel scale + zero-point</li>
+              <li>Bitpacking: store 4× INT4 values in one uint16_t using shifts and masks</li>
+              <li>Dequantization kernel: unpack INT4 → fp16 on-the-fly during matmul</li>
+              <li>Use float4 vectorized loads (128-bit) — verify memory throughput improves</li>
+              <li>Benchmark: INT4 weight matmul vs FP16 — memory bandwidth and latency</li>
+              <li>Quality check: measure RMSE of reconstructed weights vs originals</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+      <div class="card-footer">
+        <div>
+          <div class="section-label">You'll need to figure out</div>
+          <div class="pills">
+            <span class="pill">bitwise <<, >>, & in CUDA</span>
+            <span class="pill">per-channel vs per-tensor quantization</span>
+            <span class="pill">float4 / uint4 vectorized types</span>
+            <span class="pill">absmax calibration</span>
+            <span class="pill">why INT4 saves memory but not always compute</span>
+            <span class="pill">__half2 operations</span>
+          </div>
+        </div>
+        <div class="resources">
+          <a class="res-link" href="https://arxiv.org/abs/2208.07339" target="_blank">LLM.int8() paper (Dettmers)</a>
+          <a class="res-link" href="https://arxiv.org/abs/2306.00978" target="_blank">AWQ paper</a>
+          <a class="res-link" href="https://arxiv.org/abs/2210.17323" target="_blank">GPTQ paper</a>
+          <a class="res-link" href="https://docs.nvidia.com/cuda/cuda-c-programming-guide/index.html#vector-types" target="_blank">CUDA Guide — Vector Types (float4)</a>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- P08 -->
+<div class="phase-block">
+  <div class="phase-header">
+    <div class="phase-num">08</div>
+    <div class="phase-title-col">
+      <div class="phase-name">Train a Real Language Model</div>
+      <div class="phase-subtitle">Weeks 13–15 · Every tensor shape must make sense to you</div>
+    </div>
+    <div class="diff-pill d-mid">Mid</div>
+  </div>
+  <div class="project-card">
+    <div class="card-top">
+      <div class="card-icon">🧠</div>
+      <div class="card-title-col">
+        <div class="card-label">Project 08</div>
+        <div class="card-title">GPT-2 124M from Scratch — fp16 + Grad Checkpointing on Your 3050</div>
+        <div class="card-desc">No tutorial. Read nanoGPT once, close it, write your own. Train on a real dataset. Use fp16 AMP and gradient checkpointing — required on 4GB VRAM. Sequence length 256, batch size 2.</div>
+      </div>
+    </div>
+    <div class="card-body">
+      <div class="weeks">
+        <div class="week open">
+          <div class="week-header" onclick="toggleWeek(this)">
+            <span class="week-num">Week 13</span>
+            <span class="week-title">Architecture: attention, FFN, embeddings</span>
+            <span class="week-toggle">▼</span>
+          </div>
+          <div class="week-body">
+            <ul class="deliverable-list">
+              <li>Implement multi-head attention, causal mask, QKV projections from scratch</li>
+              <li>FFN with GELU activation, pre-LayerNorm (GPT-2 style)</li>
+              <li>Token + positional embeddings, weight tying (embedding = lm_head)</li>
+              <li>Forward pass test: random inputs produce correct output shape, no NaNs</li>
+            </ul>
+          </div>
+        </div>
+        <div class="week">
+          <div class="week-header" onclick="toggleWeek(this)">
+            <span class="week-num">Week 14</span>
+            <span class="week-title">Training loop + memory optimizations</span>
+            <span class="week-toggle">▼</span>
+          </div>
+          <div class="week-body">
+            <ul class="deliverable-list">
+              <li>AdamW optimizer, cosine LR schedule, gradient clipping (norm 1.0)</li>
+              <li>fp16 AMP with torch.cuda.amp.autocast — verify no overflow</li>
+              <li>Gradient checkpointing: torch.utils.checkpoint on transformer blocks</li>
+              <li>Verify it fits in 4GB VRAM at seqlen=256, batch=2</li>
+              <li>Checkpoint save/load: resume from any step</li>
+            </ul>
+          </div>
+        </div>
+        <div class="week">
+          <div class="week-header" onclick="toggleWeek(this)">
+            <span class="week-num">Week 15</span>
+            <span class="week-title">Train on real data + generate text</span>
+            <span class="week-toggle">▼</span>
+          </div>
+          <div class="week-body">
+            <ul class="deliverable-list">
+              <li>Download + tokenize a dataset (TinyShakespeare or OpenWebText 1%)</li>
+              <li>Train until loss visibly decreases — doesn't need to converge fully</li>
+              <li>Generate text samples — model should produce coherent-ish sequences</li>
+              <li>Annotated tensor shape diagram for one full forward pass</li>
+              <li>Memory usage log: peak VRAM at each batch size</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+      <div class="card-footer">
+        <div>
+          <div class="section-label">You'll need to figure out</div>
+          <div class="pills">
+            <span class="pill">scaled dot-product attention math</span>
+            <span class="pill">causal masking implementation</span>
+            <span class="pill">gradient checkpointing trade-off</span>
+            <span class="pill">fp16 AMP loss scaling</span>
+            <span class="pill">BPE tokenization</span>
+            <span class="pill">AdamW vs Adam difference</span>
+            <span class="pill">memory-mapped datasets on 8GB RAM</span>
+          </div>
+        </div>
+        <div class="resources">
+          <a class="res-link" href="https://github.com/karpathy/nanoGPT" target="_blank">nanoGPT (Karpathy)</a>
+          <a class="res-link" href="https://arxiv.org/abs/1706.03762" target="_blank">Attention Is All You Need</a>
+          <a class="res-link" href="https://www.youtube.com/watch?v=kCc8FmEb1nY" target="_blank">Let's build GPT — Karpathy YT</a>
+          <a class="res-link" href="https://arxiv.org/abs/2307.09288" target="_blank">LLaMA 2 paper (architecture reference)</a>
+          <a class="res-link" href="https://pytorch.org/docs/stable/checkpoint.html" target="_blank">PyTorch Gradient Checkpointing</a>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- P09 -->
+<div class="phase-block">
+  <div class="phase-header">
+    <div class="phase-num">09</div>
+    <div class="phase-title-col">
+      <div class="phase-name">Make Inference Fast — LLM Inference Engine</div>
+      <div class="phase-subtitle">Weeks 16–17 · KV cache, quantized weights, tok/s</div>
+    </div>
+    <div class="diff-pill d-hard">Hard</div>
+  </div>
+  <div class="project-card">
+    <div class="card-top">
+      <div class="card-icon">🚀</div>
+      <div class="card-title-col">
+        <div class="card-label">Project 09</div>
+        <div class="card-title">Inference Runtime — KV Cache + INT4 Weights + Measure tok/s</div>
+        <div class="card-desc">Take your GPT-2 and build an inference runtime. Pre-allocate a KV cache, use your INT4 quantized weights from P07, batch decode. Your metric: tokens per second at various batch sizes.</div>
+      </div>
+    </div>
+    <div class="card-body">
+      <div class="weeks">
+        <div class="week open">
+          <div class="week-header" onclick="toggleWeek(this)">
+            <span class="week-num">Week 16</span>
+            <span class="week-title">KV cache + autoregressive decode loop</span>
+            <span class="week-toggle">▼</span>
+          </div>
+          <div class="week-body">
+            <ul class="deliverable-list">
+              <li>Pre-allocate KV cache tensors: [batch, n_heads, max_seq_len, head_dim]</li>
+              <li>Decode loop: each step appends to KV cache, attends over full history</li>
+              <li>Verify: generated tokens match non-cached generation exactly</li>
+              <li>Measure: prefill latency vs decode latency per token</li>
+            </ul>
+          </div>
+        </div>
+        <div class="week">
+          <div class="week-header" onclick="toggleWeek(this)">
+            <span class="week-num">Week 17</span>
+            <span class="week-title">INT4 weights + batched decode + benchmark table</span>
+            <span class="week-toggle">▼</span>
+          </div>
+          <div class="week-body">
+            <ul class="deliverable-list">
+              <li>Load INT4 quantized weights (from P07) into inference model</li>
+              <li>Batched decode: batch_size 1, 4, 8 — handle padding correctly</li>
+              <li>Benchmark table: tok/s at each batch size, with and without INT4 weights</li>
+              <li>Profile: identify the bottleneck — is it memory bandwidth or compute?</li>
+              <li>Bonus: implement greedy, top-k, and nucleus sampling</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+      <div class="card-footer">
+        <div>
+          <div class="section-label">You'll need to figure out</div>
+          <div class="pills">
+            <span class="pill">why decode is memory-bandwidth bound</span>
+            <span class="pill">KV cache memory growth = batch × heads × seqlen × head_dim × 2</span>
+            <span class="pill">arithmetic intensity of decode step</span>
+            <span class="pill">MQA / GQA (reduces KV cache size)</span>
+            <span class="pill">padding vs packing for batching</span>
+            <span class="pill">continuous batching concept</span>
+          </div>
+        </div>
+        <div class="resources">
+          <a class="res-link" href="https://arxiv.org/abs/2309.06180" target="_blank">vLLM — PagedAttention paper</a>
+          <a class="res-link" href="https://www.anyscale.com/blog/continuous-batching-llm-inference" target="_blank">Anyscale — Continuous Batching</a>
+          <a class="res-link" href="https://arxiv.org/abs/2208.07339" target="_blank">LLM.int8() — Dettmers</a>
+          <a class="res-link" href="https://arxiv.org/abs/2305.13245" target="_blank">GQA paper (Grouped-Query Attention)</a>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- P10 -->
+<div class="phase-block">
+  <div class="phase-header">
+    <div class="phase-num">10</div>
+    <div class="phase-title-col">
+      <div class="phase-name">The System Architect — Streams & Async</div>
+      <div class="phase-subtitle">Week 18 · CPU, PCIe, and GPU all running simultaneously</div>
+    </div>
+    <div class="diff-pill d-mid">Mid</div>
+  </div>
+  <div class="project-card">
+    <div class="card-top">
+      <div class="card-icon">🔄</div>
+      <div class="card-title-col">
+        <div class="card-label">Project 10</div>
+        <div class="card-title">Double-Buffered Inference Pipeline — 100% GPU Utilization</div>
+        <div class="card-desc">By default, your GPU waits idle while the CPU prepares the next batch. Fix this: use CUDA streams and double buffering so compute on batch N overlaps with data transfer of batch N+1.</div>
+      </div>
+    </div>
+    <div class="card-body">
+      <div class="weeks">
+        <div class="week open">
+          <div class="week-header" onclick="toggleWeek(this)">
+            <span class="week-num">Week 18</span>
+            <span class="week-title">Streams + pinned memory + double buffer</span>
+            <span class="week-toggle">▼</span>
+          </div>
+          <div class="week-body">
+            <ul class="deliverable-list">
+              <li>Baseline: single-stream pipeline — profile GPU idle time in nsys timeline</li>
+              <li>Switch host memory to cudaHostAlloc (pinned) — measure PCIe bandwidth improvement</li>
+              <li>Two CUDA streams: stream_a computes while stream_b loads next batch</li>
+              <li>Double buffer: two sets of device buffers, ping-pong between streams</li>
+              <li>nsys timeline screenshot: GPU compute and memcpy overlapping</li>
+              <li>Throughput comparison: samples/sec single-stream vs double-buffered</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+      <div class="card-footer">
+        <div>
+          <div class="section-label">You'll need to figure out</div>
+          <div class="pills">
+            <span class="pill">cudaStream_t creation and synchronization</span>
+            <span class="pill">cudaMemcpyAsync requires pinned memory</span>
+            <span class="pill">cudaHostAlloc vs malloc</span>
+            <span class="pill">stream dependency with cudaStreamWaitEvent</span>
+            <span class="pill">PCIe bandwidth on laptop (shared with display)</span>
+            <span class="pill">cudaGraph for repeated pipelines</span>
+          </div>
+        </div>
+        <div class="resources">
+          <a class="res-link" href="https://developer.nvidia.com/blog/how-overlap-data-transfers-cuda-cc/" target="_blank">NVIDIA — Overlap Data Transfers in CUDA</a>
+          <a class="res-link" href="https://docs.nvidia.com/cuda/cuda-c-best-practices-guide/index.html#asynchronous-transfers" target="_blank">CUDA Best Practices — Async Transfers</a>
+          <a class="res-link" href="https://developer.nvidia.com/blog/cuda-graphs/" target="_blank">NVIDIA Blog — CUDA Graphs</a>
+          <a class="res-link" href="https://developer.nvidia.com/nsight-systems" target="_blank">Nsight Systems (timeline view)</a>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- P11 — CAPSTONE -->
+<div class="phase-block">
+  <div class="phase-header">
+    <div class="phase-num">11</div>
+    <div class="phase-title-col">
+      <div class="phase-name">Capstone — Everything, End-to-End</div>
+      <div class="phase-subtitle">Weeks 19–24 · Train, optimize, profile, publish</div>
+    </div>
+    <div class="diff-pill d-expert">Expert</div>
+  </div>
+  <div class="project-card">
+    <div class="card-top">
+      <div class="card-icon">🏗️</div>
+      <div class="card-title-col">
+        <div class="card-label">Project 11 — Capstone</div>
+        <div class="card-title">50M LLM with Your Custom Kernels — Train, Quantize, Deploy, Report</div>
+        <div class="card-desc">Everything you built feeds into this. Train a 50M model with your FlashAttention kernel and fp16 training. Quantize with your INT4 kernel. Serve with your inference engine and double-buffered pipeline. Write a profiling report.</div>
+      </div>
+    </div>
+    <div class="card-body">
+      <div class="weeks">
+        <div class="week open">
+          <div class="week-header" onclick="toggleWeek(this)">
+            <span class="week-num">Weeks 19–20</span>
+            <span class="week-title">Train 50M model with custom kernels</span>
+            <span class="week-toggle">▼</span>
+          </div>
+          <div class="week-body">
+            <ul class="deliverable-list">
+              <li>Architecture: 50M param transformer (8 layers, 512 dim, 8 heads)</li>
+              <li>Swap stock attention for your FlashAttention kernel from P06</li>
+              <li>fp16 AMP + gradient checkpointing — must fit in 4GB</li>
+              <li>Train on OpenWebText 1% subset — log loss every 100 steps</li>
+              <li>Verify: loss curve goes down, model generates plausible text</li>
+            </ul>
+          </div>
+        </div>
+        <div class="week">
+          <div class="week-header" onclick="toggleWeek(this)">
+            <span class="week-num">Weeks 21–22</span>
+            <span class="week-title">Quantize + serve with full inference stack</span>
+            <span class="week-toggle">▼</span>
+          </div>
+          <div class="week-body">
+            <ul class="deliverable-list">
+              <li>Apply your INT4 quantization kernel from P07 to trained weights</li>
+              <li>Measure perplexity: fp16 vs INT4 (should be within 1–2 points)</li>
+              <li>Plug into your inference engine (P09): KV cache + batched decode</li>
+              <li>Wrap in double-buffered pipeline (P10) for throughput</li>
+              <li>Benchmark: tok/s fp16 vs tok/s INT4 at batch sizes 1, 4, 8</li>
+            </ul>
+          </div>
+        </div>
+        <div class="week">
+          <div class="week-header" onclick="toggleWeek(this)">
+            <span class="week-num">Weeks 23–24</span>
+            <span class="week-title">Profiling report + GitHub publish</span>
+            <span class="week-toggle">▼</span>
+          </div>
+          <div class="week-body">
+            <ul class="deliverable-list">
+              <li>Full Nsight Systems trace: where does time go across the whole system?</li>
+              <li>Profiling report: baseline vs each optimization — TFLOPS, GB/s, tok/s</li>
+              <li>Published GitHub repo: README, training curves, benchmark tables, architecture diagram</li>
+              <li>One-pager: "What I learned about GPU systems from building this"</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+      <div class="card-footer">
+        <div>
+          <div class="section-label">You'll need to figure out</div>
+          <div class="pills">
+            <span class="pill">Triton for any new custom ops</span>
+            <span class="pill">torch.compile interaction with custom kernels</span>
+            <span class="pill">DDP if you ever get a second GPU</span>
+            <span class="pill">perplexity vs downstream eval</span>
+            <span class="pill">OpenWebText streaming to fit in 8GB RAM</span>
+          </div>
+        </div>
+        <div class="resources">
+          <a class="res-link" href="https://github.com/karpathy/llm.c" target="_blank">llm.c — Karpathy (read every file)</a>
+          <a class="res-link" href="https://arxiv.org/abs/1910.02054" target="_blank">ZeRO paper (Rajbhandari)</a>
+          <a class="res-link" href="https://triton-lang.org/main/getting-started/tutorials/index.html" target="_blank">Triton tutorials</a>
+          <a class="res-link" href="https://arxiv.org/abs/1909.08053" target="_blank">Megatron-LM paper</a>
+          <a class="res-link" href="https://github.com/NVIDIA/cutlass" target="_blank">CUTLASS repo</a>
+          <a class="res-link" href="https://huggingface.co/datasets/Skylion007/openwebtext" target="_blank">OpenWebText dataset (HuggingFace)</a>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════ GOING LOWER ══════════════ -->
+<div class="lower-section">
+  <div class="lower-title">Going Lower — The Full Stack</div>
+  <div class="lower-subtitle">
+    // Three rabbit holes. Taste each one. Decide how far you want to go.<br>
+    // Purple weeks inside each project are your entry points. This section is the deeper reading.
+  </div>
+  <div class="lower-grid">
+
+    <div class="lower-card">
+      <div class="lower-card-label">Level 1 · PTX &amp; SASS</div>
+      <div class="lower-card-title">Reading GPU Assembly</div>
+      <div class="lower-card-desc">PTX is NVIDIA's virtual ISA — what NVCC compiles your C++ to. SASS is the actual binary that runs on your GA106. You'll read both in P01 and P04. The gap between what you wrote and what the hardware executes is where all performance hides.</div>
+      <div class="lower-resources">
+        <a class="res-link-p" href="https://docs.nvidia.com/cuda/parallel-thread-execution/index.html" target="_blank">PTX ISA Reference</a>
+        <a class="res-link-p" href="https://godbolt.org/" target="_blank">Godbolt — CUDA PTX Explorer</a>
+        <a class="res-link-p" href="https://docs.nvidia.com/cuda/cuda-binary-utilities/index.html" target="_blank">cuobjdump / SASS Utilities</a>
+      </div>
+    </div>
+
+    <div class="lower-card">
+      <div class="lower-card-label">Level 2 · Driver API &amp; Runtime</div>
+      <div class="lower-card-title">Below the CUDA Runtime</div>
+      <div class="lower-card-desc">The CUDA Runtime (cudaMalloc, <<<>>>)  is a convenience wrapper. Below it is the Driver API: explicit context management, module loading, PTX-to-binary JIT compilation at runtime. PyTorch's CUDA backend calls the Driver API directly. Writing one kernel at this level shows you exactly what the runtime hides.</div>
+      <div class="lower-resources">
+        <a class="res-link-p" href="https://docs.nvidia.com/cuda/cuda-driver-api/index.html" target="_blank">CUDA Driver API Reference</a>
+        <a class="res-link-p" href="https://docs.nvidia.com/nsight-compute/ProfilingGuide/index.html" target="_blank">ncu Profiling Guide — all sections</a>
+        <a class="res-link-p" href="https://developer.nvidia.com/nsight-systems" target="_blank">nsys — full timeline tracing</a>
+      </div>
+    </div>
+
+    <div class="lower-card">
+      <div class="lower-card-label">Level 3 · Microarchitecture &amp; HDL</div>
+      <div class="lower-card-title">The Chip Itself</div>
+      <div class="lower-card-desc">Understanding the GA106 die — SM pipeline, warp scheduler, memory crossbar, Tensor Core dataflow — changes how you think about every kernel. TinyGPU is a minimal GPU in Verilog you can actually simulate. You don't need to write HDL to benefit from reading it.</div>
+      <div class="lower-resources">
+        <a class="res-link-p" href="https://chipsandcheese.com/2021/09/22/nvidias-ampere-architecture-in-depth/" target="_blank">Chips &amp; Cheese — Ampere In-Depth</a>
+        <a class="res-link-p" href="https://github.com/adam-maj/tiny-gpu" target="_blank">TinyGPU — minimal GPU in Verilog</a>
+        <a class="res-link-p" href="https://www.nvidia.com/en-us/data-center/ampere-architecture/" target="_blank">NVIDIA Ampere Architecture Whitepaper</a>
+        <a class="res-link-p" href="https://www.elsevier.com/books/computer-organization-and-design-arm-edition/patterson/978-0-12-801733-3" target="_blank">Patterson &amp; Hennessy — Ch4–5 (pipelines)</a>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- ══════════════ TIMELINE OVERVIEW ══════════════ -->
+<div class="timeline-section">
+  <div class="timeline-title">Week-by-Week at a Glance</div>
+  <div class="timeline-grid">
+    <div class="tl-cell"><div class="tl-week">Week 1</div><div class="tl-proj">P00: Hardware benchmark</div><div class="tl-tag">📐</div></div>
+    <div class="tl-cell"><div class="tl-week">Week 2</div><div class="tl-proj">P01: Naive GEMM + profile</div><div class="tl-tag">⚡</div></div>
+    <div class="tl-cell"><div class="tl-week">Week 3</div><div class="tl-proj">P01: Tiled GEMM + benchmark</div><div class="tl-tag">⚡</div></div>
+    <div class="tl-cell"><div class="tl-week">Week 4</div><div class="tl-proj">P02: Parallel reduction</div><div class="tl-tag">🔀</div></div>
+    <div class="tl-cell"><div class="tl-week">Week 5</div><div class="tl-proj">P03: Image convolution</div><div class="tl-tag">🖼</div></div>
+    <div class="tl-cell"><div class="tl-week">Week 6</div><div class="tl-proj">P04: FP16 + WMMA fragments</div><div class="tl-tag">🧮</div></div>
+    <div class="tl-cell"><div class="tl-week">Week 7</div><div class="tl-proj">P04: Tiled WMMA benchmark</div><div class="tl-tag">🧮</div></div>
+    <div class="tl-cell"><div class="tl-week">Week 8</div><div class="tl-proj">P05: Softmax + LayerNorm</div><div class="tl-tag">🔧</div></div>
+    <div class="tl-cell"><div class="tl-week">Week 9</div><div class="tl-proj">P05: Fusion + backward</div><div class="tl-tag">🔧</div></div>
+    <div class="tl-cell"><div class="tl-week">Week 10</div><div class="tl-proj">P06: FlashAttn forward</div><div class="tl-tag">⚙️</div></div>
+    <div class="tl-cell"><div class="tl-week">Week 11</div><div class="tl-proj">P06: Profile HBM savings</div><div class="tl-tag">⚙️</div></div>
+    <div class="tl-cell"><div class="tl-week">Week 12</div><div class="tl-proj">P07: INT4 bitpacking</div><div class="tl-tag">🗜️</div></div>
+    <div class="tl-cell"><div class="tl-week">Week 13</div><div class="tl-proj">P08: GPT-2 architecture</div><div class="tl-tag">🧠</div></div>
+    <div class="tl-cell"><div class="tl-week">Week 14</div><div class="tl-proj">P08: Training loop + AMP</div><div class="tl-tag">🧠</div></div>
+    <div class="tl-cell"><div class="tl-week">Week 15</div><div class="tl-proj">P08: Train on real data</div><div class="tl-tag">🧠</div></div>
+    <div class="tl-cell"><div class="tl-week">Week 16</div><div class="tl-proj">P09: KV cache + decode</div><div class="tl-tag">🚀</div></div>
+    <div class="tl-cell"><div class="tl-week">Week 17</div><div class="tl-proj">P09: INT4 + batch benchmark</div><div class="tl-tag">🚀</div></div>
+    <div class="tl-cell"><div class="tl-week">Week 18</div><div class="tl-proj">P10: Streams + double buffer</div><div class="tl-tag">🔄</div></div>
+    <div class="tl-cell"><div class="tl-week">Wk 19–20</div><div class="tl-proj">P11: Train 50M model</div><div class="tl-tag">🏗️</div></div>
+    <div class="tl-cell"><div class="tl-week">Wk 21–22</div><div class="tl-proj">P11: Quantize + serve</div><div class="tl-tag">🏗️</div></div>
+    <div class="tl-cell"><div class="tl-week">Wk 23–24</div><div class="tl-proj">P11: Report + publish</div><div class="tl-tag">🏗️</div></div>
+  </div>
+</div>
+
+<footer>
+  <span><strong>CUDA × LLM</strong> — Integrated Master Roadmap · RTX 3050 4GB</span>
+  <span>12 projects · 24 weeks · merged from 3 sources · build first</span>
+</footer>
+
+</div>
+
+<script>
+function toggleWeek(header) {
+  const week = header.parentElement;
+  week.classList.toggle('open');
+}
+// open first week of each card by default — already set in HTML
+</script>
+</body>
+</html>
