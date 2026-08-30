@@ -1,0 +1,14 @@
+# Build artifacts (per ARCHITECTURE.md)
+*.o
+*.ptx
+*.cubin
+bin/
+build/
+
+# Profiler raw captures — keep exported screenshots/tables, not these
+*.nsys-rep
+*.ncu-rep
+
+# Training checkpoints / large datasets (P08, P11)
+checkpoints/
+assets/*.bin
