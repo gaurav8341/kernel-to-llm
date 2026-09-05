@@ -26,9 +26,9 @@ int main() {
 
     // TODO: time cudaMemcpy(H2D) with GpuTimer, repeat a few times, take the best/median.
     // Host to GPU copy -- Sync
-    GpuTimer* h2d_sync = new GpuTimer();
-    
-    h2d_sync->start();
+    GpuTimer h2d_sync("H2D-SYNC");
+
+    h2d_sync.start();
     CUDA_CHECK(
         cudaMemcpy(
             d_buffer,
@@ -37,10 +37,13 @@ int main() {
             cudaMemcpyHostToDevice
         )
     );
-    h2d_sync->stop();
-    h2d_sync->log("H2D-SYNC");
+    h2d_sync.stop();
+    h2d_sync.log();
 
     // Host to GPU copy -- async
+    GpuTimer h2d_async("H2D-ASYNC");
+
+    h2d_async.start();
     CUDA_CHECK(
         cudaMemcpyAsync(
             d_buffer,
@@ -49,8 +52,15 @@ int main() {
             cudaMemcpyHostToDevice
         )
     );
+    h2d_async.stop();
+
+    CUDA_CHECK(cudaDeviceSynchronize());
+    h2d_async.log();
 
     // Host to GPU copy unpinned host and sync
+    GpuTimer h2d_unpinned_sync("H2D-UNPINNED-SYNC");
+
+    h2d_unpinned_sync.start();
     CUDA_CHECK(
         cudaMemcpy(
             d_buffer,
@@ -59,10 +69,15 @@ int main() {
             cudaMemcpyHostToDevice
         )
     );
+    h2d_unpinned_sync.stop();
+    h2d_unpinned_sync.log();
 
     // TODO: compute achieved GB/s = bytes / (ms / 1000) / 1e9.
     // TODO: repeat for D2H, and optionally D2D.
     // GPU to HOST copy -- sync
+    GpuTimer d2h_sync("D2H-SYNC");
+
+    d2h_sync.start();
     CUDA_CHECK(
         cudaMemcpy(
             h_buffer_pinned,
@@ -71,8 +86,13 @@ int main() {
             cudaMemcpyDeviceToHost
         )
     );
+    d2h_sync.stop();
+    d2h_sync.log();
 
     // GPU to HOST copy -- async
+    GpuTimer d2h_async("D2H-ASYNC");
+
+    d2h_async.start();
     CUDA_CHECK(
         cudaMemcpyAsync(
             h_buffer_pinned,
@@ -81,8 +101,15 @@ int main() {
             cudaMemcpyDeviceToHost
         )
     );
+    d2h_async.stop();
+
+    CUDA_CHECK(cudaDeviceSynchronize());
+    d2h_async.log();
 
     // GPU to HOST copy -- unpinned host and sync
+    GpuTimer d2h_unpinned_sync("D2H-UNPINNED-SYNC");
+
+    d2h_unpinned_sync.start();
     CUDA_CHECK(
         cudaMemcpy(
             h_buffer_unpinned,
@@ -91,6 +118,8 @@ int main() {
             cudaMemcpyDeviceToHost
         )
     );
+    d2h_unpinned_sync.stop();
+    d2h_unpinned_sync.log();
 
 
     // TODO: print achieved vs the 3050's theoretical VRAM bandwidth (see docs/hardware-spec-sheet.md).

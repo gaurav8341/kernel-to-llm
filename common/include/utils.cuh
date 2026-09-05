@@ -26,10 +26,12 @@ struct GpuTimer{
 
     cudaEvent_t startEvent, stopEvent;
     float ms = 0.0f;
+    string event;
 
-    GpuTimer(){
+    GpuTimer(string event){
         CUDA_CHECK(cudaEventCreate(&startEvent));
         CUDA_CHECK(cudaEventCreate(&stopEvent));
+        this->event = event; 
     }
 
     ~GpuTimer(){
@@ -51,13 +53,10 @@ struct GpuTimer{
         CUDA_CHECK(cudaEventElapsedTime(&ms, startEvent, stopEvent));
     }
 
-    void log(string event){
+    float log(){
         synchronize();
-        fprintf(stdout, "%s:%f", event.c_str(), ms);
+        fprintf(stdout, "%s : %f ms\n", event.c_str(), ms);
+        return ms;
     }
-
-    // float get_elapsed_time(){
-    //     return ms
-    // }
 
 };
