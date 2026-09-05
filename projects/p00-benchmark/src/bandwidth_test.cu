@@ -38,7 +38,7 @@ int main() {
         )
     );
     h2d_sync.stop();
-    h2d_sync.log();
+    h2d_sync.log(size);
 
     // Host to GPU copy -- async
     GpuTimer h2d_async("H2D-ASYNC");
@@ -55,7 +55,7 @@ int main() {
     h2d_async.stop();
 
     CUDA_CHECK(cudaDeviceSynchronize());
-    h2d_async.log();
+    h2d_async.log(size);
 
     // Host to GPU copy unpinned host and sync
     GpuTimer h2d_unpinned_sync("H2D-UNPINNED-SYNC");
@@ -70,9 +70,10 @@ int main() {
         )
     );
     h2d_unpinned_sync.stop();
-    h2d_unpinned_sync.log();
+    h2d_unpinned_sync.log(size);
 
     // TODO: compute achieved GB/s = bytes / (ms / 1000) / 1e9.
+    
     // TODO: repeat for D2H, and optionally D2D.
     // GPU to HOST copy -- sync
     GpuTimer d2h_sync("D2H-SYNC");
@@ -87,7 +88,7 @@ int main() {
         )
     );
     d2h_sync.stop();
-    d2h_sync.log();
+    d2h_sync.log(size);
 
     // GPU to HOST copy -- async
     GpuTimer d2h_async("D2H-ASYNC");
@@ -104,7 +105,7 @@ int main() {
     d2h_async.stop();
 
     CUDA_CHECK(cudaDeviceSynchronize());
-    d2h_async.log();
+    d2h_async.log(size);
 
     // GPU to HOST copy -- unpinned host and sync
     GpuTimer d2h_unpinned_sync("D2H-UNPINNED-SYNC");
@@ -119,7 +120,7 @@ int main() {
         )
     );
     d2h_unpinned_sync.stop();
-    d2h_unpinned_sync.log();
+    d2h_unpinned_sync.log(size);
 
 
     // TODO: print achieved vs the 3050's theoretical VRAM bandwidth (see docs/hardware-spec-sheet.md).

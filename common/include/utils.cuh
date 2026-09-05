@@ -53,10 +53,17 @@ struct GpuTimer{
         CUDA_CHECK(cudaEventElapsedTime(&ms, startEvent, stopEvent));
     }
 
-    float log(){
+    float log(size_t size){
         synchronize();
         fprintf(stdout, "%s : %f ms\n", event.c_str(), ms);
+        float throughput = get_throughput(size);
+        fprintf(stdout, "Throughput GB/s: %f\n", throughput);
         return ms;
+    }
+
+    // Get throuput per sec in GB/s
+    float get_throughput(size_t size){
+        return (size / (ms/1000)) / 1e9;
     }
 
 };
