@@ -8,6 +8,7 @@ build/
 # Profiler raw captures — keep exported screenshots/tables, not these
 *.nsys-rep
 *.ncu-rep
+*.sqlite
 
 # Training checkpoints / large datasets (P08, P11)
 checkpoints/

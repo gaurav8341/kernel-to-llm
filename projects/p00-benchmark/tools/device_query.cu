@@ -1,3 +1,4 @@
+// Claude-generated tooling (not hand-written by the project author — see tools/README.md).
 // P00 — Device query: reads this machine's actual GPU clocks/bus width (CUDA runtime)
 // and negotiated PCIe link generation/width (NVML), then computes theoretical VRAM
 // and PCIe bandwidth from those live values. Feeds the "Theoretical peak" table in

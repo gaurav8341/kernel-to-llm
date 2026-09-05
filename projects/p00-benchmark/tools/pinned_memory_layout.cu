@@ -1,3 +1,4 @@
+// Claude-generated tooling (not hand-written by the project author — see tools/README.md).
 // P00 — Pinned memory layout: checks whether a cudaMallocHost buffer's physical
 // pages are actually contiguous, or scattered across many discontiguous 4KB
 // frames. Feeds the IOMMU-overhead hypothesis in docs/hardware-spec-sheet.md —

@@ -17,10 +17,10 @@ $(BIN_DIR)/bandwidth_test: src/bandwidth_test.cu | $(BIN_DIR)
 $(BIN_DIR)/compute_test: src/compute_test.cu | $(BIN_DIR)
 	$(NVCC) $(FLAGS) $< -o $@
 
-$(BIN_DIR)/device_query: src/device_query.cu | $(BIN_DIR)
+$(BIN_DIR)/device_query: tools/device_query.cu | $(BIN_DIR)
 	$(NVCC) $(FLAGS) $< -o $@ -lnvidia-ml
 
-$(BIN_DIR)/pinned_memory_layout: src/pinned_memory_layout.cu | $(BIN_DIR)
+$(BIN_DIR)/pinned_memory_layout: tools/pinned_memory_layout.cu | $(BIN_DIR)
 	$(NVCC) $(FLAGS) $< -o $@
 
 run-bandwidth: $(BIN_DIR)/bandwidth_test
