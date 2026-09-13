@@ -9,6 +9,7 @@
 
 using namespace std;
 
+#define CORES_PER_SM 128 // cores per sm in the rtx 3050 laptop edition
 
 #define CUDA_CHECK(call)                                                                        \
 {                                                                                               \
@@ -53,17 +54,17 @@ struct GpuTimer{
         CUDA_CHECK(cudaEventElapsedTime(&ms, startEvent, stopEvent));
     }
 
-    float log(size_t size){
+    float log(){
         synchronize();
-        fprintf(stdout, "%s : %f ms\n", event.c_str(), ms);
-        float throughput = get_throughput(size);
-        fprintf(stdout, "Throughput GB/s: %f\n", throughput);
+        fprintf(stdout, "%s : %f ms\n", event.c_str(), ms); 
         return ms;
     }
 
     // Get throuput per sec in GB/s
     float get_throughput(size_t size){
-        return (size / (ms/1000)) / 1e9;
+        float throughput = (size / (ms / 1000)) / 1e9;
+        fprintf(stdout, "Throughput GB/s: %f\n", throughput);
+        return throughput;
     }
 
 };

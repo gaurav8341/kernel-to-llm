@@ -1,4 +1,4 @@
-# Hardware Spec Sheet — RTX 3050 Laptop (GA106, sm_86)
+# Hardware Spec Sheet — RTX 3050 Laptop (GA107, sm_86)
 
 *Produced by P00. Referenced by every later project to judge "% of peak" achieved.*
 
@@ -6,7 +6,7 @@
 
 | Metric | Value | How computed |
 |---|---|---|
-| FP32 TFLOPS (theoretical) | TODO | SMs × CUDA cores/SM × boost clock (GHz) × 2 (FMA) |
+| FP32 TFLOPS (theoretical) | 4.33 TFLOPS | 16 SMs × 128 cores/SM × 1.057 GHz × 2 (FMA) = 4.329 TFLOPS |
 | VRAM bandwidth (theoretical) | 176.03 GB/s | 5501 MHz × 2 (GDDR6 DDR factor) × 128-bit bus / 8 = 176.032 GB/s |
 | PCIe bandwidth (theoretical) | 15.75 GB/s | Gen4 x8 (negotiated link, not the slot's Gen4 x16 max) × 1.969 GB/s/lane (16 GT/s, 128b/130b encoding) |
 
@@ -16,7 +16,7 @@
 |---|---|---|
 | H2D bandwidth (GB/s) | 7.22 (pinned, sync) | 45.8% of PCIe |
 | D2H bandwidth (GB/s) | 7.12 (pinned, sync) | 45.2% of PCIe |
-| FP32 compute (TFLOPS) | TODO | TODO |
+| FP32 compute (TFLOPS) | 3.99 | 92.16% of FP32 peak |
 
 ## Notes
 
@@ -102,4 +102,13 @@ D2H-ASYNC : 81.223938 ms
 Throughput GB/s: 13.219524
 D2H-UNPINNED-SYNC : 475.717804 ms
 Throughput GB/s: 2.257098
+```
+
+`make run-compute`:
+
+```
+Compute Bound FMA : 26.280895 ms
+Achieved TFLOPS: 3.989879
+Theoretical TFLOPS: 4.329472
+% of peak reached: 92.16%
 ```
