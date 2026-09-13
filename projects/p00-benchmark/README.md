@@ -22,12 +22,12 @@ Before writing any kernel, measure your hardware's physical ceiling. You'll refe
 | Metric | Theoretical | Achieved | % of peak |
 |---|---|---|---|
 | VRAM bandwidth | 176.03 GB/s | — (not exercised by a memcpy-only test) | — |
-| PCIe bandwidth | 15.75 GB/s (Gen4 x8, not the slot's x16 max) | H2D 12.67 GB/s · D2H 13.22 GB/s (pinned, sync) | ~80-84% |
-| FP32 TFLOPS | 4.33 TFLOPS | 3.99-4.12 TFLOPS across runs | 92-95% |
+| PCIe bandwidth | 15.75 GB/s (Gen4 x8, not the slot's x16 max) | H2D 12.63-12.76 GB/s · D2H 13.32-13.34 GB/s (pinned, sync) | ~80-85% |
+| FP32 TFLOPS | 4.33 TFLOPS | 4.12 TFLOPS (warm) | 95.1% |
 
 The PCIe figures above are *after* switching the IOMMU to passthrough. Before that, the same test measured H2D 7.22 GB/s · D2H 7.12 GB/s — about 45% of the ceiling.
 
-The full writeup — raw tool output, and the investigation into *why* achieved bandwidth started at only ~45% of the PCIe ceiling — is in [`docs/hardware-spec-sheet.md`](../../docs/hardware-spec-sheet.md). Short version: GPU throttling, chipset uplink contention, ASPM idle-cycling and link errors were each ruled out with live evidence, leaving IOMMU translation overhead over a physically fragmented pinned buffer. Booting with `iommu=pt` confirmed it, at the cost of system-wide DMA isolation. The fragmentation itself is still unaddressed — that's where the remaining ~16-20% is likely hiding.
+The full writeup — raw tool output, and the investigation into *why* achieved bandwidth started at only ~45% of the PCIe ceiling — is in [`docs/hardware-spec-sheet.md`](../../docs/hardware-spec-sheet.md). Short version: GPU throttling, chipset uplink contention, ASPM idle-cycling and link errors were each ruled out with live evidence, leaving IOMMU translation overhead over a physically fragmented pinned buffer. Booting with `iommu=pt` confirmed it, at the cost of system-wide DMA isolation. The fragmentation itself is still unaddressed — that's where the remaining ~15-20% is likely hiding.
 
 ### Tooling
 

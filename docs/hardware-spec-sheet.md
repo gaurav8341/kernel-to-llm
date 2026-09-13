@@ -14,9 +14,11 @@
 
 | Metric | Achieved | % of theoretical |
 |---|---|---|
-| H2D bandwidth (GB/s) | 7.22 (pinned, sync) | 45.8% of PCIe |
-| D2H bandwidth (GB/s) | 7.12 (pinned, sync) | 45.2% of PCIe |
-| FP32 compute (TFLOPS) | 3.99 | 92.16% of FP32 peak |
+| H2D bandwidth (GB/s) | 12.63-12.76 (pinned, sync, `iommu=pt`) | ~80-81% of PCIe |
+| D2H bandwidth (GB/s) | 13.32-13.34 (pinned, sync, `iommu=pt`) | ~85% of PCIe |
+| FP32 compute (TFLOPS) | 4.12 (warm) | 95.1% of FP32 peak |
+
+Before switching the IOMMU to passthrough, the same bandwidth test measured **H2D 7.22 / D2H 7.12 GB/s** — ~45% of the PCIe ceiling. See the IOMMU notes below for what changed and what it cost.
 
 ## Notes
 
@@ -25,8 +27,10 @@
   - PCIe: NVML (`nvmlDeviceGetCurrPcieLinkGeneration/Width`) sampled *while `bandwidth_test` was actively running* — Gen4 x8. The idle reading briefly shows Gen1 (power-saving downclock), so idle NVML/`nvidia-smi` reads are not a reliable theoretical-peak source; sample under load.
 - **PCIe link is x8, not x16**: `nvmlDeviceGetMaxPcieLinkWidth` reports Gen4 x16 as this GPU's max capability, but the negotiated link (both idle and under load) is consistently Gen4 x8 — this laptop wires the dGPU with half the lanes the die supports. That alone halves the PCIe ceiling used above (31.5 GB/s → 15.75 GB/s) and is worth remembering for any future PCIe-bound project on this machine.
 - GB/s uses the decimal convention (1e9) throughout, matching the formula already used in `bandwidth_test.cu`.
-- Measured H2D/D2H figures are a single run each (pinned, synchronous variant) from `bandwidth_test.cu`'s current output — the repeat/best-or-median TODO from that file is still open, so treat these as one sample, not a stable average. Unpinned transfers measured meaningfully slower (~5.5-6.1 GB/s H2D, ~2.6-2.9 GB/s D2H, both noisier run-to-run) and async variants tracked within noise of their sync counterparts on the default stream.
-- Even against the corrected 15.75 GB/s PCIe ceiling, ~45% achieved is a real gap (not just an artifact of comparing against the wrong bus) — worth investigating later if a PCIe-bound project needs more headroom.
+- `bandwidth_test.cu` still has no repeat/best-or-median logic (that TODO is open), so each figure is one sample per run — but the pinned numbers have been reproduced across several runs and hold to within ~1%, so the ranges quoted above are stable. Async variants track within noise of their sync counterparts on the default stream.
+- **Unpinned transfers are the noisy outlier.** Unpinned H2D sits around 6.4-6.5 GB/s, but unpinned D2H measured 2.63, 2.26, 1.94 and 1.43 GB/s across four consecutive runs in one session — a 1.8× spread, trending downward, while every pinned path stayed flat. Don't quote a single unpinned D2H number; treat that path as unreliable until it's understood (likely host-side page-cache/fragmentation state accumulating, not a PCIe effect).
+- Measured FP32 compute is 95.1% of peak on warm runs (4.117 TFLOPS, 25.46-25.47 ms, reproduced across runs). The first run of a cold session measured 3.99 TFLOPS / 92.16% (26.28 ms) — treat that as a cold-clock outlier, not the representative figure.
+- After switching the IOMMU to passthrough, ~80-85% of the corrected 15.75 GB/s ceiling is reached. The remaining ~15-20% is the open question — physical fragmentation of the pinned buffer is the leading suspect, and `pinned_memory_layout.cu` already has a hugepage (`mmap` + `MADV_HUGEPAGE` + `cudaHostRegister`) comparison path built to test it, not yet run.
 - **Likely cause of the remaining gap: IOMMU translation overhead on a physically fragmented pinned buffer.** GPU core throttling, chipset uplink contention, ASPM idle-cycling, and link errors were all ruled out with live evidence (see `nvidia-smi -q -d PERFORMANCE` during load, `lspci -t`, per-transfer gap timing from an `nsys` trace, and clean AER counters, respectively). This system's IOMMU (Intel VT-d) runs in `Translated` mode, not passthrough, and `projects/p00-benchmark/tools/pinned_memory_layout.cu` (`make run-pinned-layout`, needs `sudo` — unprivileged reads of `/proc/self/pagemap` return zeroed PFNs) shows the 1GB pinned buffer's physical pages are extremely fragmented: 36,932 separate contiguous runs averaging ~28KB (7 pages) each, with the single largest run only 1.28MB — nowhere close to huge-page-backed (`transparent_hugepage/enabled` is `madvise`, and nothing indicates `cudaMallocHost` requests it). With fragmentation this severe the IOMMU can't build large superpage mappings, so a linear DMA sweep crosses into a newly-mapped region roughly every 28KB — likely causing frequent IOTLB misses well beyond the hardware's cache capacity. This is strong corroborating evidence, not proof; the test that would confirm causation outright is booting with `iommu=pt` and re-measuring — since done, see below (note it trades away IOMMU DMA isolation *system-wide*, not just for the dGPU, so it was treated as a deliberate follow-up rather than something flipped casually).
 - TGP/thermal throttling observed: TODO
 - Any gap between theoretical and achieved worth flagging for later projects: PCIe link width (x8 vs x16) is the standout finding from P00 — see above.
@@ -104,11 +108,20 @@ D2H-UNPINNED-SYNC : 475.717804 ms
 Throughput GB/s: 2.257098
 ```
 
-`make run-compute`:
+`make run-compute` — first run of a cold session:
 
 ```
 Compute Bound FMA : 26.280895 ms
 Achieved TFLOPS: 3.989879
 Theoretical TFLOPS: 4.329472
 % of peak reached: 92.16%
+```
+
+`make run-compute` — warm, representative (reproduced across runs at 95.09-95.12%):
+
+```
+Compute Bound FMA : 25.469952 ms
+Achieved TFLOPS: 4.116914
+Theoretical TFLOPS: 4.329472
+% of peak reached: 95.09%
 ```
