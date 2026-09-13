@@ -31,6 +31,13 @@
 - TGP/thermal throttling observed: TODO
 - Any gap between theoretical and achieved worth flagging for later projects: PCIe link width (x8 vs x16) is the standout finding from P00 — see above.
 
+- **IOMMU virtulization for memory addressing was bottleneck**:
+So setup the iommu and set it to `pt` which means there will not be any virtualization of addressing. The devices can acces the MMU access without any iommu filter or virtualization. Setting it to `pt` mode will disable the virtulization and allow the devices to use the memory addresses directly without any virtualization or walkthrough bottleneck
+
+This gave us a real perf boost: H2D sync went from 7.22 GB/s to 12.67 GB/s and D2H sync from 7.12 GB/s to 13.22 GB/s — roughly a 76-86% increase, pushing us from ~45% to ~80-84% of the 15.75 GB/s PCIe ceiling. But this is also a security issue as now any device can access the device memory directly without any virtulization which is unsafe memory management. 
+
+The rest of the gap from ideal likely comes from memory fragmentation (see the pinned-layout measurement above — longest contiguous run was only 1.28 MB out of the 1GB buffer, pre-`iommu=pt`; not re-measured after the reboot).
+
 ## Raw output
 
 `make run-device-query`:
@@ -75,4 +82,24 @@ pages with unavailable PFN: 0
 contiguous physical runs:  36932
 longest run:               328 pages (1.28 MB)
 average run length:        7.1 pages (0.0027% of buffer)
+```
+
+`make run-bandwidth`:
+
+After setting `iommu=pt`
+
+```
+./bin/bandwidth_test
+H2D-SYNC : 84.718430 ms
+Throughput GB/s: 12.674241
+H2D-ASYNC : 84.337852 ms
+Throughput GB/s: 12.731434
+H2D-UNPINNED-SYNC : 165.404770 ms
+Throughput GB/s: 6.491601
+D2H-SYNC : 81.233696 ms
+Throughput GB/s: 13.217937
+D2H-ASYNC : 81.223938 ms
+Throughput GB/s: 13.219524
+D2H-UNPINNED-SYNC : 475.717804 ms
+Throughput GB/s: 2.257098
 ```
