@@ -387,7 +387,7 @@
   <p class="tagline">// Project-first. Week-by-week. Every deliverable is concrete.<br>Merged from 3 roadmaps — nothing redundant, nothing missing.</p>
 
   <div class="hw-badge">
-    🖥 RTX 3050 4GB · GA106 Ampere · 80 Tensor Cores · 128-bit bus
+    🖥 RTX 3050 4GB · GA107 Ampere · 64 Tensor Cores · 128-bit bus
     <span>| 8GB System RAM</span>
   </div>
 
@@ -710,7 +710,7 @@
       <div class="card-title-col">
         <div class="card-label">Project 04</div>
         <div class="card-title">FP16 GEMM with Tensor Cores — 4× Faster Than Your FP32 Kernel</div>
-        <div class="card-desc">Your RTX 3050 has 80 Tensor Cores that your P01 kernel never touched. Use nvcuda::wmma to explicitly trigger them. This is what PyTorch uses under the hood for every LLM matmul.</div>
+        <div class="card-desc">Your RTX 3050 has 64 Tensor Cores that your P01 kernel never touched. Use nvcuda::wmma to explicitly trigger them. This is what PyTorch uses under the hood for every LLM matmul.</div>
       </div>
     </div>
     <div class="card-body">
@@ -937,7 +937,7 @@
               <li>Run ncu with full warp stall sections — this shows exactly why warps are idle</li>
               <li>Identify your dominant stall type: is it memory latency, sync barriers, or instruction pipeline?</li>
               <li>For each stall type, understand what the hardware scheduler is waiting on</li>
-              <li>Read the Chips and Cheese Ampere article — understand the GA106 die your code runs on</li>
+              <li>Read the Chips and Cheese Ampere article — understand the GA107 die your code runs on</li>
               <li>Write a paragraph connecting your stall reason to the actual hardware unit causing it</li>
             </ul>
             <div class="code-block"><span class="cmd">ncu --section WarpStateStatistics \
@@ -1382,7 +1382,7 @@
     <div class="lower-card">
       <div class="lower-card-label">Level 1 · PTX &amp; SASS</div>
       <div class="lower-card-title">Reading GPU Assembly</div>
-      <div class="lower-card-desc">PTX is NVIDIA's virtual ISA — what NVCC compiles your C++ to. SASS is the actual binary that runs on your GA106. You'll read both in P01 and P04. The gap between what you wrote and what the hardware executes is where all performance hides.</div>
+      <div class="lower-card-desc">PTX is NVIDIA's virtual ISA — what NVCC compiles your C++ to. SASS is the actual binary that runs on your GA107. You'll read both in P01 and P04. The gap between what you wrote and what the hardware executes is where all performance hides.</div>
       <div class="lower-resources">
         <a class="res-link-p" href="https://docs.nvidia.com/cuda/parallel-thread-execution/index.html" target="_blank">PTX ISA Reference</a>
         <a class="res-link-p" href="https://godbolt.org/" target="_blank">Godbolt — CUDA PTX Explorer</a>
@@ -1404,7 +1404,7 @@
     <div class="lower-card">
       <div class="lower-card-label">Level 3 · Microarchitecture &amp; HDL</div>
       <div class="lower-card-title">The Chip Itself</div>
-      <div class="lower-card-desc">Understanding the GA106 die — SM pipeline, warp scheduler, memory crossbar, Tensor Core dataflow — changes how you think about every kernel. TinyGPU is a minimal GPU in Verilog you can actually simulate. You don't need to write HDL to benefit from reading it.</div>
+      <div class="lower-card-desc">Understanding the GA107 die — SM pipeline, warp scheduler, memory crossbar, Tensor Core dataflow — changes how you think about every kernel. TinyGPU is a minimal GPU in Verilog you can actually simulate. You don't need to write HDL to benefit from reading it.</div>
       <div class="lower-resources">
         <a class="res-link-p" href="https://chipsandcheese.com/2021/09/22/nvidias-ampere-architecture-in-depth/" target="_blank">Chips &amp; Cheese — Ampere In-Depth</a>
         <a class="res-link-p" href="https://github.com/adam-maj/tiny-gpu" target="_blank">TinyGPU — minimal GPU in Verilog</a>

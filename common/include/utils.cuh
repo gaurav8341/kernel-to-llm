@@ -1,3 +1,5 @@
+#pragma once
+
 #include<cuda.h>
 #include<cuda_runtime.h>
 
@@ -7,12 +9,12 @@
 #include<cstdio>
 #include<cstdlib>
 
-using namespace std;
-
 #define CORES_PER_SM 128 // cores per sm in the rtx 3050 laptop edition
 
+// do/while(0) so the macro stays a single statement — a bare { } block would
+// break `if (x) CUDA_CHECK(...); else ...`
 #define CUDA_CHECK(call)                                                                        \
-{                                                                                               \
+do {                                                                                            \
     cudaError_t cuda_err = (call);                                                              \
     if(cuda_err != cudaSuccess){                                                                \
         fprintf(stderr, "========================================\n");                          \
@@ -21,15 +23,15 @@ using namespace std;
         fprintf(stderr, "========================================\n");                          \
         exit(EXIT_FAILURE);                                                                     \
     }                                                                                           \
-}
+} while(0)
 
 struct GpuTimer{
 
     cudaEvent_t startEvent, stopEvent;
     float ms = 0.0f;
-    string event;
+    std::string event;
 
-    GpuTimer(string event){
+    GpuTimer(std::string event){
         CUDA_CHECK(cudaEventCreate(&startEvent));
         CUDA_CHECK(cudaEventCreate(&stopEvent));
         this->event = event; 
@@ -60,8 +62,9 @@ struct GpuTimer{
         return ms;
     }
 
-    // Get throuput per sec in GB/s
+    // Get throughput per sec in GB/s
     float get_throughput(size_t size){
+        synchronize(); // so ms is valid even if log() wasn't called first
         float throughput = (size / (ms / 1000)) / 1e9;
         fprintf(stdout, "Throughput GB/s: %f\n", throughput);
         return throughput;

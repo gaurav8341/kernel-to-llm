@@ -4,7 +4,7 @@
 
 > Project-first. Week-by-week. Every deliverable is concrete. Merged from 3 roadmaps — nothing redundant, nothing missing.
 
-**Hardware:** 🖥 RTX 3050 4GB · GA106 Ampere · 80 Tensor Cores · 128-bit bus | 8GB System RAM
+**Hardware:** 🖥 RTX 3050 4GB · GA107 Ampere · 64 Tensor Cores · 128-bit bus | 8GB System RAM
 
 **12** Projects · **24** Weeks (ideal) · **32–36** Weeks (real) · **↑↑** Difficulty
 
@@ -159,7 +159,7 @@ Implement 2D convolution on a real image. The boundary pixel "halo" problem forc
 
 **Project 04: FP16 GEMM with Tensor Cores — 4× Faster Than Your FP32 Kernel**
 
-Your RTX 3050 has 80 Tensor Cores that your P01 kernel never touched. Use nvcuda::wmma to explicitly trigger them. This is what PyTorch uses under the hood for every LLM matmul.
+Your RTX 3050 has 64 Tensor Cores that your P01 kernel never touched. Use nvcuda::wmma to explicitly trigger them. This is what PyTorch uses under the hood for every LLM matmul.
 
 ### Week 6 — FP16 data layout + WMMA fragments
 
@@ -276,7 +276,7 @@ Standard attention materializes an N×N matrix in VRAM — impossible for long s
 - Run ncu with full warp stall sections — this shows exactly why warps are idle
 - Identify your dominant stall type: is it memory latency, sync barriers, or instruction pipeline?
 - For each stall type, understand what the hardware scheduler is waiting on
-- Read the Chips and Cheese Ampere article — understand the GA106 die your code runs on
+- Read the Chips and Cheese Ampere article — understand the GA107 die your code runs on
 - Write a paragraph connecting your stall reason to the actual hardware unit causing it
 
 ```
@@ -494,7 +494,7 @@ Everything you built feeds into this. Train a 50M model with your FlashAttention
 
 ### Level 1 · PTX & SASS — Reading GPU Assembly
 
-PTX is NVIDIA's virtual ISA — what NVCC compiles your C++ to. SASS is the actual binary that runs on your GA106. You'll read both in P01 and P04. The gap between what you wrote and what the hardware executes is where all performance hides.
+PTX is NVIDIA's virtual ISA — what NVCC compiles your C++ to. SASS is the actual binary that runs on your GA107. You'll read both in P01 and P04. The gap between what you wrote and what the hardware executes is where all performance hides.
 - [PTX ISA Reference](https://docs.nvidia.com/cuda/parallel-thread-execution/index.html)
 - [Godbolt — CUDA PTX Explorer](https://godbolt.org/)
 - [cuobjdump / SASS Utilities](https://docs.nvidia.com/cuda/cuda-binary-utilities/index.html)
@@ -508,7 +508,7 @@ The CUDA Runtime (cudaMalloc, <<<>>>)  is a convenience wrapper. Below it is the
 
 ### Level 3 · Microarchitecture & HDL — The Chip Itself
 
-Understanding the GA106 die — SM pipeline, warp scheduler, memory crossbar, Tensor Core dataflow — changes how you think about every kernel. TinyGPU is a minimal GPU in Verilog you can actually simulate. You don't need to write HDL to benefit from reading it.
+Understanding the GA107 die — SM pipeline, warp scheduler, memory crossbar, Tensor Core dataflow — changes how you think about every kernel. TinyGPU is a minimal GPU in Verilog you can actually simulate. You don't need to write HDL to benefit from reading it.
 - [Chips & Cheese — Ampere In-Depth](https://chipsandcheese.com/2021/09/22/nvidias-ampere-architecture-in-depth/)
 - [TinyGPU — minimal GPU in Verilog](https://github.com/adam-maj/tiny-gpu)
 - [NVIDIA Ampere Architecture Whitepaper](https://www.nvidia.com/en-us/data-center/ampere-architecture/)

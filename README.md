@@ -4,12 +4,13 @@ CUDA × LLM Mastery — a project-first, week-by-week roadmap for learning GPU k
 
 > Project-first. Week-by-week. Every deliverable is concrete.
 
-**Hardware:** RTX 3050 4GB · GA106 Ampere · 80 Tensor Cores · 128-bit bus · 8GB System RAM
+**Hardware:** RTX 3050 4GB · GA107 Ampere · 64 Tensor Cores · 128-bit bus · 8GB System RAM
 
 **12** projects · **24** weeks ideal / **32–36** weeks real · difficulty ramps Starter → Expert
 
 ## Files
 
+- [`docs/hardware-spec-sheet.md`](docs/hardware-spec-sheet.md) — this machine's measured ceilings (PCIe, VRAM, FP32), produced by P00 and referenced by every later project
 - [`Objective.md`](Objective.md) — the roadmap source (Markdown)
 - [`ARCHITECTURE.md`](ARCHITECTURE.md) — how the code will be structured as projects get built
 - [`cuda-llm-master-roadmap.html`](cuda-llm-master-roadmap.html) — styled, readable version of the same roadmap
@@ -17,24 +18,24 @@ CUDA × LLM Mastery — a project-first, week-by-week roadmap for learning GPU k
 
 ## The track
 
-| # | Project | Weeks | Difficulty |
-|---|---------|-------|------------|
-| 00 | Speed of Light Benchmark — peak TFLOPS & bandwidth | 1 | Starter |
-| 01 | The Memory Architect — tiled SGEMM, beat cuBLAS | 2–3 | Starter |
-| 02 | The Warp Tactician — parallel reduction, warp shuffle | 4 | Starter → Mid |
-| 03 | Warp Divergence in the Wild — Gaussian blur + Sobel | 5 | Starter → Mid |
-| 04 | The Tensor Core Specialist — FP16 GEMM with WMMA | 6–7 | Mid |
-| 05 | The Kernel Fusionist — fused Softmax + LayerNorm | 8–9 | Mid |
-| 06 | The Most Important Kernel — FlashAttention | 10–11 | Hard |
-| 07 | The Quantization Engineer — INT4 bitpacking | 12 | Mid |
-| 08 | Train a Real Language Model — GPT-2 124M from scratch | 13–15 | Mid |
-| 09 | Make Inference Fast — KV cache + INT4 + tok/s | 16–17 | Hard |
-| 10 | The System Architect — CUDA streams & double buffering | 18 | Mid |
-| 11 | Capstone — 50M LLM, train/quantize/deploy/report | 19–24 | Expert |
+| # | Project | Weeks | Difficulty | Status |
+|---|---------|-------|------------|--------|
+| 00 | [Speed of Light Benchmark](projects/p00-benchmark/) — peak TFLOPS & bandwidth | 1 | Starter | ✅ Done |
+| 01 | The Memory Architect — tiled SGEMM, beat cuBLAS | 2–3 | Starter | |
+| 02 | The Warp Tactician — parallel reduction, warp shuffle | 4 | Starter → Mid | |
+| 03 | Warp Divergence in the Wild — Gaussian blur + Sobel | 5 | Starter → Mid | |
+| 04 | The Tensor Core Specialist — FP16 GEMM with WMMA | 6–7 | Mid | |
+| 05 | The Kernel Fusionist — fused Softmax + LayerNorm | 8–9 | Mid | |
+| 06 | The Most Important Kernel — FlashAttention | 10–11 | Hard | |
+| 07 | The Quantization Engineer — INT4 bitpacking | 12 | Mid | |
+| 08 | Train a Real Language Model — GPT-2 124M from scratch | 13–15 | Mid | |
+| 09 | Make Inference Fast — KV cache + INT4 + tok/s | 16–17 | Hard | |
+| 10 | The System Architect — CUDA streams & double buffering | 18 | Mid | |
+| 11 | Capstone — 50M LLM, train/quantize/deploy/report | 19–24 | Expert | |
 
 Each project builds on the last: kernels from earlier projects (tiled GEMM, warp reduction, WMMA, INT4 quant, FlashAttention) get reused directly in the GPT-2 training run (P08) and the final capstone (P11).
 
-**Going lower:** three optional deep-dive tracks run alongside the main projects — reading PTX/SASS assembly (P01, P04), the CUDA Driver API below the Runtime, and GA106 microarchitecture / HDL. See the "Going Lower" section in the roadmap for entry points.
+**Going lower:** three optional deep-dive tracks run alongside the main projects — reading PTX/SASS assembly (P01, P04), the CUDA Driver API below the Runtime, and GA107 microarchitecture / HDL. See the "Going Lower" section in the roadmap for entry points.
 
 ## How to use this
 

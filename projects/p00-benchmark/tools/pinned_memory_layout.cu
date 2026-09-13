@@ -53,8 +53,9 @@ static void report_layout(const char *label, char *buf, size_t size, int pagemap
 
         if (!present || swapped || pfn == 0) {
             unavailable_pages++;
-            have_prev = false;
             if (current_run > longest_run) longest_run = current_run;
+            if (have_prev) num_runs++; // close the run this gap interrupts
+            have_prev = false;
             current_run = 0;
             continue;
         }

@@ -10,20 +10,24 @@ Before writing any kernel, measure your hardware's physical ceiling. You'll refe
 
 - [x] Install CUDA toolkit, NVCC, Nsight Systems + Compute
 - [x] Write a bandwidth test: time cudaMemcpy of 1GB host→device, compute GB/s → `src/bandwidth_test.cu`
-- [ ] Write a compute test: max-throughput fp32 kernel, compute TFLOPS achieved → `src/compute_test.cu` (stub only; currently `#include`s a stale `timing.cuh` path from before the `GpuTimer` move into `common/include/utils.cuh`)
+- [x] Write a compute test: max-throughput fp32 kernel, compute TFLOPS achieved → `src/compute_test.cu`
 - [x] Record actual bandwidth: theoretical vs achieved → see Results below and `docs/hardware-spec-sheet.md`
-- [ ] Record actual TFLOPS: theoretical vs achieved — blocked on the compute test
+- [x] Record actual TFLOPS: theoretical vs achieved → see Results below
 - [x] Write a one-page "Hardware Spec Sheet" → [`docs/hardware-spec-sheet.md`](../../docs/hardware-spec-sheet.md)
 
-### Results so far
+**P00 complete.**
+
+### Results
 
 | Metric | Theoretical | Achieved | % of peak |
 |---|---|---|---|
 | VRAM bandwidth | 176.03 GB/s | — (not exercised by a memcpy-only test) | — |
-| PCIe bandwidth | 15.75 GB/s (Gen4 x8, not the slot's x16 max) | H2D 7.22 GB/s · D2H 7.12 GB/s (pinned, sync) | ~45% |
-| FP32 TFLOPS | TODO | TODO | TODO |
+| PCIe bandwidth | 15.75 GB/s (Gen4 x8, not the slot's x16 max) | H2D 12.67 GB/s · D2H 13.22 GB/s (pinned, sync) | ~80-84% |
+| FP32 TFLOPS | 4.33 TFLOPS | 3.99-4.12 TFLOPS across runs | 92-95% |
 
-The full writeup — raw tool output, and the investigation into *why* achieved bandwidth is only ~45% of the PCIe ceiling (GPU throttling, chipset uplink contention, ASPM idle-cycling, and link errors were all ruled out with live evidence; IOMMU translation overhead on a physically fragmented pinned buffer is the leading remaining suspect) — is in [`docs/hardware-spec-sheet.md`](../../docs/hardware-spec-sheet.md).
+The PCIe figures above are *after* switching the IOMMU to passthrough. Before that, the same test measured H2D 7.22 GB/s · D2H 7.12 GB/s — about 45% of the ceiling.
+
+The full writeup — raw tool output, and the investigation into *why* achieved bandwidth started at only ~45% of the PCIe ceiling — is in [`docs/hardware-spec-sheet.md`](../../docs/hardware-spec-sheet.md). Short version: GPU throttling, chipset uplink contention, ASPM idle-cycling and link errors were each ruled out with live evidence, leaving IOMMU translation overhead over a physically fragmented pinned buffer. Booting with `iommu=pt` confirmed it, at the cost of system-wide DMA isolation. The fragmentation itself is still unaddressed — that's where the remaining ~16-20% is likely hiding.
 
 ### Tooling
 
