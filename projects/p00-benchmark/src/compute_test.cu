@@ -1,5 +1,5 @@
 // P00 — Compute test: a max-throughput fp32 kernel, compute achieved TFLOPS.
-#include "../../../common/include/utils.cuh"
+#include "utils.cuh"
 
 // TODO: write a kernel that is compute-bound, not memory-bound — e.g. many FMAs
 // per loaded value (a tight loop of fused multiply-adds on register-resident data),

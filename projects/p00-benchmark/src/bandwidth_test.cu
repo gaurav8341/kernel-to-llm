@@ -4,7 +4,7 @@
 
 #include <cuda.h>
 
-#include "../../../common/include/utils.cuh"
+#include "utils.cuh"
 
 int main() {
     // TODO: allocate a ~1GB host buffer and a matching device buffer.
@@ -110,7 +110,7 @@ int main() {
 
     CUDA_CHECK(cudaDeviceSynchronize());
     d2h_async.log();
-    d2h_async.get_throughput();
+    d2h_async.get_throughput(size);
 
     // GPU to HOST copy -- unpinned host and sync
     GpuTimer d2h_unpinned_sync("D2H-UNPINNED-SYNC");
