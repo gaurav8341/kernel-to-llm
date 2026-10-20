@@ -56,9 +56,20 @@ struct GpuTimer{
         CUDA_CHECK(cudaEventElapsedTime(&ms, startEvent, stopEvent));
     }
 
-    float log(){
+    // Elapsed ms, synchronized but SILENT. log() is the chatty version; this is
+    // the one a caller wants when it is formatting its own output, or timing in
+    // a loop where 100 printed lines would be noise instead of data.
+    //
+    // It calls synchronize() itself on purpose: reading the `ms` field directly
+    // after stop() returns whatever was there before — 0.0f on the first use —
+    // because stop() only RECORDS the event, it does not wait for it.
+    float elapsed(){
         synchronize();
-        fprintf(stdout, "%s : %f ms\n", event.c_str(), ms); 
+        return ms;
+    }
+
+    float log(){
+        fprintf(stdout, "%s : %f ms\n", event.c_str(), elapsed());
         return ms;
     }
 
@@ -68,6 +79,29 @@ struct GpuTimer{
         float throughput = (size / (ms / 1000)) / 1e9;
         fprintf(stdout, "Throughput GB/s: %f\n", throughput);
         return throughput;
+    }
+
+    // Compute rate in TFLOPS, given the number of USEFUL floating-point
+    // operations in the work that was timed. The counterpart to
+    // get_throughput(): GB/s is the figure of merit for a memory-bound kernel,
+    // TFLOPS for a compute-bound one.
+    //
+    // `flops` is a double, not a size_t, because callers compute it as
+    // 2*M*N*K and 2 * 4096^3 = 1.37e11 overflows a 32-bit int. Double carries
+    // 53 bits of mantissa, so it is exact well past anything a GPU can run.
+    //
+    // Returns 0 on a zero elapsed time rather than inf: a kernel that failed to
+    // launch times at exactly 0.000 ms, and inf prints as a spectacular,
+    // completely fictional rate.
+    float get_tflops(double flops){
+        synchronize();
+        if (ms <= 0.0f) {
+            fprintf(stdout, "TFLOPS: n/a (elapsed time was 0 — did the kernel launch?)\n");
+            return 0.0f;
+        }
+        float tflops = (flops / (ms / 1000.0)) / 1e12;
+        fprintf(stdout, "TFLOPS: %f\n", tflops);
+        return tflops;
     }
 
 };
