@@ -4,6 +4,8 @@
 //   ./bin/check_sgemm                         # CPU reference, 512^3
 //   ./bin/check_sgemm 512 256 128             # CPU reference, M N K
 //   ./bin/check_sgemm --data correctness/data # numpy reference (reference.py)
+//   ./bin/check_sgemm --only naive            # one variant
+//   ./bin/check_sgemm --only naive --block 32x8   # and a launch override
 //
 // Exit code: 0 = every variant passed, 1 = a variant failed, 2 = bad usage.
 //
@@ -60,9 +62,20 @@ static double abs_floor_for_k(int K) {
 // look correct while both drifted. The whole value of a reference is that its
 // error is negligible compared to the tolerance.
 //
-// Cost is O(M*N*K) scalar work: 512^3 takes about a second, 1024^3 about ten.
-// For 4096^3 use --data (numpy), or lean on bench/, which checks against
-// cuBLAS instead.
+// Cost is O(M*N*K) scalar work, and it is THE limit on how big a shape this
+// file can check. Measured on this machine, wall time for the whole run:
+//
+//     512^3   0.32 s      2048^3   19.4 s
+//    1024^3   2.18 s      3072^3  116.5 s     <- kernel itself: 0.21 s
+//    1536^3   8.43 s
+//
+// At 3072^3 the oracle is ~565x slower than the kernel it is judging, and it
+// grows as N^3 from there (4096^3 is several minutes). Past ~2048^3, use
+// --data (numpy), or lean on bench/, which checks against cuBLAS instead.
+//
+// A second ceiling sits just behind it: this file holds hA, hB and hRef on the
+// host, and check_close_device allocates one more buffer of the same size, so
+// host memory runs out near N ~ 11000 on a machine with 2 GB free.
 // ---------------------------------------------------------------------------
 static void sgemm_cpu(int M, int N, int K, float alpha,
                       const float *A, const float *B,
@@ -129,30 +142,80 @@ static bool read_shape(const char *dir, int *M, int *N, int *K) {
 
 static void usage(const char *argv0) {
     fprintf(stderr,
-            "usage: %s [M N K]            CPU reference (default 512 512 512)\n"
-            "       %s --data <dir>       numpy reference from reference.py\n",
-            argv0, argv0);
+            "usage: %s [M N K] [options]\n"
+            "  M N K                 shape, all three or none (default 512 512 512)\n"
+            "  --data <dir>          numpy reference from reference.py instead of the CPU oracle\n"
+            "  --only naive|tiled    check one variant instead of all of them\n"
+            "  --block BXxBY         launch override, e.g. 32x8 (default: each kernel's own)\n"
+            "\n"
+            "BX is the COLUMN extent. --block applies only to variants whose geometry is\n"
+            "free; the tiled kernel is fixed to TILE_DIM x TILE_DIM and is skipped instead.\n",
+            argv0);
 }
 
 int main(int argc, char **argv) {
     int M = 512, N = 512, K = 512;
     const char *data_dir = nullptr;
+    const char *only     = nullptr;      // nullptr = every variant
+    dim3 block(0, 0);                    // zero extent = each launcher's default
 
-    // argc counts the program name, so "M N K" is argc == 4, not 3.
-    if (argc == 1) {
-        // defaults
-    } else if (argc == 3 && strcmp(argv[1], "--data") == 0) {
-        data_dir = argv[2];
-    } else if (argc == 4) {
-        M = atoi(argv[1]);
-        N = atoi(argv[2]);
-        K = atoi(argv[3]);
-        if (M <= 0 || N <= 0 || K <= 0) {
-            fprintf(stderr, "check: M, N, K must all be positive\n");
+    // A flag loop rather than a fixed argc test, so shape and options can be
+    // combined in any order. Positionals are collected separately and only
+    // accepted as a complete triple: a lone "512" is far more likely to be a
+    // typo than a request to change M alone.
+    int shape[3] = {0, 0, 0}, nshape = 0;
+    for (int i = 1; i < argc; ++i) {
+        if (!strcmp(argv[i], "--data") && i + 1 < argc) {
+            data_dir = argv[++i];
+        } else if (!strcmp(argv[i], "--only") && i + 1 < argc) {
+            only = argv[++i];
+        } else if (!strcmp(argv[i], "--block") && i + 1 < argc) {
+            if (!sgemm_parse_block(argv[++i], &block)) {
+                fprintf(stderr, "check: bad --block \"%s\" (want e.g. 32x8)\n", argv[i]);
+                return 2;
+            }
+        } else if (argv[i][0] != '-') {
+            if (nshape == 3) { usage(argv[0]); return 2; }
+            shape[nshape++] = atoi(argv[i]);
+        } else {
+            usage(argv[0]);
             return 2;
         }
-    } else {
-        usage(argv[0]);
+    }
+
+    if (nshape == 3) {
+        M = shape[0]; N = shape[1]; K = shape[2];
+    } else if (nshape != 0) {
+        fprintf(stderr, "check: give all three of M N K, or none\n");
+        return 2;
+    }
+    if (M <= 0 || N <= 0 || K <= 0) {
+        fprintf(stderr, "check: M, N, K must all be positive\n");
+        return 2;
+    }
+
+    int nvariants = 0;
+    const SgemmVariant *variants = sgemm_variants(&nvariants);
+
+    // Reject an unknown --only up front. Without this, a typo like
+    // "--only tiles" would match nothing, every variant would be skipped, and
+    // the run would exit 0 having checked absolutely nothing.
+    if (only && strcmp(only, "all") != 0) {
+        bool known = false;
+        for (int i = 0; i < nvariants; ++i)
+            if (!strcmp(only, variants[i].name)) known = true;
+        if (!known) {
+            fprintf(stderr, "check: unknown --only \"%s\"; known variants are", only);
+            for (int i = 0; i < nvariants; ++i) fprintf(stderr, " %s", variants[i].name);
+            fprintf(stderr, " all\n");
+            return 2;
+        }
+    }
+
+    int max_threads = 0;
+    if (block.x && !sgemm_block_fits_device(block, &max_threads)) {
+        fprintf(stderr, "check: block %ux%u = %u threads exceeds the device limit of %d\n",
+                block.x, block.y, block.x * block.y, max_threads);
         return 2;
     }
 
@@ -162,9 +225,14 @@ int main(int argc, char **argv) {
 
     const double kAbsFloor = abs_floor_for_k(K);
 
+    char block_desc[32] = "kernel default";
+    if (block.x) snprintf(block_desc, sizeof(block_desc), "%ux%u", block.x, block.y);
+
     fprintf(stdout, "SGEMM correctness  M=%d N=%d K=%d  alpha=%.1f beta=%.1f  "
-                    "reference=%s  rel_tol=%.1e  abs_floor=%.1e\n",
-            M, N, K, kAlpha, kBeta, data_dir ? data_dir : "cpu", kRelTol, kAbsFloor);
+                    "reference=%s  rel_tol=%.1e  abs_floor=%.1e\n"
+                    "                   variants=%s  block=%s\n",
+            M, N, K, kAlpha, kBeta, data_dir ? data_dir : "cpu", kRelTol, kAbsFloor,
+            only ? only : "all", block_desc);
 
     std::vector<float> hA(nA), hB(nB), hRef(nC, 0.0f);
 
@@ -200,13 +268,22 @@ int main(int argc, char **argv) {
     CUDA_CHECK(cudaMemcpy(dA, hA.data(), nA * sizeof(float), cudaMemcpyHostToDevice));
     CUDA_CHECK(cudaMemcpy(dB, hB.data(), nB * sizeof(float), cudaMemcpyHostToDevice));
 
-    struct Variant { const char *name; SgemmLauncher fn; };
-    const Variant variants[] = {
-        {"naive", sgemm_naive},
-        {"tiled", sgemm_tiled},
-    };
+    for (int vi = 0; vi < nvariants; ++vi) {
+        const SgemmVariant &v = variants[vi];
+        if (!sgemm_variant_selected(v.name, only)) continue;
 
-    for (const Variant &v : variants) {
+        // An override aimed at a kernel whose geometry is fixed is skipped with
+        // a reason rather than silently ignored — a silently ignored flag makes
+        // two different runs look identical and is how a false conclusion about
+        // block size gets drawn.
+        dim3 vblock = block;
+        if (vblock.x && !v.block_is_free) {
+            fprintf(stdout, "%-12s skipped: block is fixed to %dx%d by TILE_DIM "
+                            "(rebuild with TILE= to change it)\n",
+                    v.name, TILE_DIM, TILE_DIM);
+            continue;
+        }
+
         // Zero C before every variant, for two reasons that both matter:
         //   1. beta = 0 does not make C's prior contents irrelevant. The
         //      epilogue computes beta * C, and 0.0f * NaN is NaN, not 0 — so
@@ -223,7 +300,7 @@ int main(int argc, char **argv) {
         // recorded in the stream, so they bracket the kernel on the device.
         GpuTimer timer(v.name);
         timer.start();
-        v.fn(M, N, K, kAlpha, dA, dB, kBeta, dC);
+        v.fn(M, N, K, kAlpha, dA, dB, kBeta, dC, vblock);
         timer.stop();
 
         // The launcher deliberately does not synchronize (see sgemm.cuh), so the

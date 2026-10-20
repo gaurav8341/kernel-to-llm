@@ -28,9 +28,11 @@ __global__ void sgemmNaiveKernel(int M, int N, int K, float alpha,
     C[row * N + col] = alpha * psum + beta * C[row * N + col];
 }
 
+// No default argument here: C++ allows it on the DECLARATION only (sgemm.cuh),
+// and repeating it in the definition is an error.
 void sgemm_naive(int M, int N, int K, float alpha,
                  const float *dA, const float *dB,
-                 float beta, float *dC) {
+                 float beta, float *dC, dim3 block) {
     // TODO: pick a 2D block (16x16 and 32x32 are the two obvious choices — the
     // difference in how they coalesce is worth measuring) and a grid that covers
     // M x N with a ceil-div, then launch.
@@ -40,10 +42,15 @@ void sgemm_naive(int M, int N, int K, float alpha,
     // Adjacent threads in a warp should touch adjacent addresses in C and B.
 
     // here x is COL and y is ROW
-    dim3 blockSize(16, 16); // lets make
+    //
+    // A zero extent is the "no override" sentinel from sgemm.cuh, so an
+    // unspecified block falls back to this kernel's own default and every
+    // existing call site keeps its old behaviour.
+    const dim3 blockSize = (block.x == 0 || block.y == 0) ? dim3(16, 16) : block;
+
     dim3 gridSize((N + blockSize.x - 1) / blockSize.x,
                   (M + blockSize.y - 1) / blockSize.y);
-    
+
     sgemmNaiveKernel<<<gridSize, blockSize>>>(M, N, K, alpha, dA, dB, beta, dC);
     CUDA_CHECK(cudaGetLastError());
 }
