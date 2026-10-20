@@ -9,6 +9,8 @@
 #   make reference SHAPE="1024 1024 1024" numpy reference -> correctness/data/
 #   make run-bench                        512^2, 1024^2, 4096^2
 #   make run-bench SIZES="2048"           one size
+#   make run-probe                        sweep block shapes x sizes (tools/)
+#   make run-probe ARGS="--sizes 4096 --blocks 32x8,8x32"
 #   make ptx / make sass                  dump + opcode histogram
 #   make clean
 
@@ -65,9 +67,9 @@ SHAPE ?=
 # .PHONY tells make these names are commands, not files to produce. Without it,
 # a file named `clean` in this directory would count as the target, make would
 # find it already up to date, and `make clean` would do nothing at all.
-.PHONY: all run-bench run-check reference ptx sass clean
+.PHONY: all run-bench run-check run-probe reference ptx sass clean
 
-all: $(BIN_DIR)/sgemm_bench $(BIN_DIR)/check_sgemm
+all: $(BIN_DIR)/sgemm_bench $(BIN_DIR)/check_sgemm $(BIN_DIR)/sgemm_probe
 
 # Order-only prerequisite (everything after the `|`): make requires the
 # directory to EXIST but ignores its timestamp. That distinction matters —
@@ -87,6 +89,14 @@ $(BIN_DIR)/check_sgemm: correctness/check_sgemm.cu $(KERNEL_OBJS) $(HEADERS) | $
 # meant to be independent of.
 $(BIN_DIR)/sgemm_bench: bench/sgemm_bench.cu $(KERNEL_OBJS) $(HEADERS) | $(BIN_DIR)
 	$(NVCC) $(FLAGS) $< $(KERNEL_OBJS) -o $@ -lcublas
+
+# The probe launches sgemmNaiveKernel directly to vary the block shape, so it
+# needs the kernel object and cuBLAS (its reference), same as the bench.
+$(BIN_DIR)/sgemm_probe: tools/sgemm_probe.cu $(KERNEL_OBJS) $(HEADERS) | $(BIN_DIR)
+	$(NVCC) $(FLAGS) $< $(KERNEL_OBJS) -o $@ -lcublas
+
+run-probe: $(BIN_DIR)/sgemm_probe
+	./$(BIN_DIR)/sgemm_probe $(ARGS)
 
 run-bench: $(BIN_DIR)/sgemm_bench
 	./$(BIN_DIR)/sgemm_bench $(SIZES)
