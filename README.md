@@ -21,7 +21,7 @@ CUDA × LLM Mastery — a project-first, week-by-week roadmap for learning GPU k
 | # | Project | Weeks | Difficulty | Status |
 |---|---------|-------|------------|--------|
 | 00 | [Speed of Light Benchmark](projects/p00-benchmark/) — peak TFLOPS & bandwidth | 1 | Starter | ✅ Done |
-| 01 | The Memory Architect — tiled SGEMM, beat cuBLAS | 2–3 | Starter | |
+| 01 | [The Memory Architect](projects/p01-sgemm/) — tiled SGEMM, beat cuBLAS | 2–3 | Starter | 🚧 In progress |
 | 02 | The Warp Tactician — parallel reduction, warp shuffle | 4 | Starter → Mid | |
 | 03 | Warp Divergence in the Wild — Gaussian blur + Sobel | 5 | Starter → Mid | |
 | 04 | The Tensor Core Specialist — FP16 GEMM with WMMA | 6–7 | Mid | |

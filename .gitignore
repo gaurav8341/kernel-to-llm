@@ -1,6 +1,7 @@
 # Build artifacts (per ARCHITECTURE.md)
 *.o
 *.ptx
+*.sass
 *.cubin
 bin/
 build/
@@ -13,3 +14,6 @@ build/
 # Training checkpoints / large datasets (P08, P11)
 checkpoints/
 assets/*.bin
+
+# Generated reference data (P01 correctness/reference.py)
+correctness/data/
